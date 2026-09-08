@@ -15,8 +15,8 @@ export interface DossierInput {
   module2: boolean;
 }
 
-const NAVY = rgb(0.055, 0.165, 0.278);
-const GOLD = rgb(0.788, 0.635, 0.153);
+const NAVY = rgb(0.176, 0.208, 0.545); // #2d358b Econet indigo
+const GOLD = rgb(0.914, 0.133, 0.184); // #e9222f Econet red accent
 const INK = rgb(0.1, 0.12, 0.14);
 const MUTED = rgb(0.42, 0.47, 0.53);
 const GREEN = rgb(0.13, 0.55, 0.13);

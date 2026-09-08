@@ -27,7 +27,7 @@ export default function ComplianceValue({
     { label: 'Unmitigated exposure', value: roi.unmitigatedExposuresUsd, note: 'SI 154 outage + tower fines still at risk this pilot month', color: '#ef4444' },
     { label: 'Shielded by QoS shield', value: roi.mitigatedSavingsUsd, note: 'Outage + tower fines avoided via live shielding (75% efficiency)', color: '#22c55e' },
     { label: 'Support deflection savings', value: roi.supportDeflectionSavingsUsd + LABOR + sessionExtra, note: 'Call-centre deflection + labour avoided', color: '#3b82f6' },
-    { label: 'Year-1 net value', value: net, note: `Annualised value minus US$15,000 capex · payback ${paybackD.toFixed(0)} days`, color: '#c9a227' }
+    { label: 'Year-1 net value', value: net, note: `Annualised value minus US$15,000 capex · payback ${paybackD.toFixed(0)} days`, color: '#2d358b' }
   ];
 
   const exportCsv = () => {
@@ -45,11 +45,11 @@ export default function ComplianceValue({
   };
 
   return (
-    <section className="rounded-2xl bg-[#0e2a47] p-4 text-white shadow-sm" aria-label="Compliance value report">
+    <section className="rounded-2xl bg-[#2d358b] p-4 text-white shadow-sm" aria-label="Compliance value report">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-bold">Compliance value · pilot month</h2>
         <div className="flex gap-2">
-          <button onClick={exportCsv} className="flex items-center gap-1 rounded-lg bg-[#c9a227] px-3 py-1.5 text-sm font-bold text-[#0e2a47]">
+          <button onClick={exportCsv} className="flex items-center gap-1 rounded-lg bg-[#c80f22] px-3 py-1.5 text-sm font-bold text-white">
             <FileDown size={14} /> Export CSV
           </button>
           <button onClick={() => window.print()} className="flex items-center gap-1 rounded-lg border border-white/30 px-3 py-1.5 text-sm">

@@ -77,6 +77,13 @@ export default function FleetGrid({
         </div>
       </div>
 
+      <div className="mt-1 flex flex-wrap items-center gap-3 text-[11px] text-slate-500" aria-label="Status legend">
+        <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-600" /> Online</span>
+        <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-amber-400" /> Backup battery</span>
+        <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-red-600" /> Offline / KPI breach</span>
+        <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-sm outline outline-2 outline-offset-1 outline-blue-700" /> Crew assigned</span>
+      </div>
+
       {loading && towers.length === 0 ? (
         <div className="mt-3 grid grid-cols-10 gap-1" aria-label="Loading fleet">
           {Array.from({ length: 40 }).map((_, i) => (

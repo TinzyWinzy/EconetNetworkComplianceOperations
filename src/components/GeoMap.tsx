@@ -112,6 +112,7 @@ export default function GeoMap({ towers }: { towers: TowerTelemetry[] }) {
       </div>
       <p className="tnum mt-2 text-xs text-slate-500">
         {towers.length} Harare pilot sites · synthetic coordinates for demo · pan/zoom, click a marker for its SI 154 status.
+        Keyboard and screen-reader users: switch to the Grid view for a fully accessible site list.
       </p>
     </section>
   );

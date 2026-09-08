@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
+    "@tanstack/react-table": "^8.21.3",
     "@vercel/node": "^12.0.1",
     "dotenv": "^17.4.2",
     "lucide-react": "^0.469.0",

@@ -30,16 +30,16 @@ export default function DemoGate({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0e2a47] p-4">
+    <div className="flex min-h-screen items-center justify-center bg-[#2d358b] p-4">
       <form
         onSubmit={submit}
         className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
         aria-label="Demo access"
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#c9a227] font-bold text-[#0e2a47]">E</div>
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#e9222f] font-bold text-white">E</div>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-[#c9a227]">Econet Wireless · Harare pilot</p>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-[#c80f22]">Econet Wireless · Harare pilot</p>
             <h1 className="text-base font-bold leading-tight text-slate-900">Network compliance operations</h1>
           </div>
         </div>
@@ -58,7 +58,7 @@ export default function DemoGate({ children }: { children: ReactNode }) {
             setError(false);
           }}
           placeholder="••••"
-          className="tnum mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-center text-2xl tracking-[0.5em] focus:border-[#c9a227] focus:outline-none focus:ring-2 focus:ring-[#c9a227]/30"
+          className="tnum mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-center text-2xl tracking-[0.5em] focus:border-[#e9222f] focus:outline-none focus:ring-2 focus:ring-[#e9222f]/30"
           aria-invalid={error}
         />
 
@@ -70,7 +70,7 @@ export default function DemoGate({ children }: { children: ReactNode }) {
 
         <button
           type="submit"
-          className="mt-4 w-full rounded-lg bg-[#0e2a47] py-2.5 font-semibold text-white transition hover:bg-[#13385e]"
+          className="mt-4 w-full rounded-lg bg-[#2d358b] py-2.5 font-semibold text-white transition hover:bg-[#3a43a6]"
         >
           Unlock console
         </button>

@@ -1,13 +1,18 @@
 import { useEffect, useMemo, useState, lazy, Suspense } from 'react';
+import { Compass } from 'lucide-react';
 import NOCDashboard from './components/NOCDashboard';
 import Incidents from './components/Incidents';
 import FleetGrid from './components/FleetGrid';
+import FleetTable from './components/FleetTable';
 import ActionQueue from './components/ActionQueue';
 import ExecBriefing from './components/ExecBriefing';
 import SubscriberCare from './components/SubscriberCare';
 import PhoneSimulator from './components/PhoneSimulator';
 import ComplianceValue from './components/ComplianceValue';
 import ComplianceDossier from './components/ComplianceDossier';
+import DemoGuide from './components/DemoGuide';
+import AuditLogTable from './components/AuditLogTable';
+import type { GuideStep } from './components/DemoGuide';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useTowerTelemetry } from './hooks/useTowerTelemetry';
 import { useOpsPersistence } from './hooks/useOpsPersistence';
@@ -20,7 +25,7 @@ const GeoMap = lazy(() => import('./components/GeoMap'));
 type Tab = 'overview' | 'briefing' | 'fleet' | 'subscribers' | 'reports';
 type Feed = 'live' | 'grid-event';
 type Role = 'noc' | 'executive';
-type FleetView = 'grid' | 'map';
+type FleetView = 'grid' | 'table' | 'map';
 type SubscriberView = 'customer' | 'care';
 
 function useClock(): string {
@@ -40,6 +45,7 @@ export default function App() {
   const [module2, setModule2] = useState(true);
   const [fleetView, setFleetView] = useState<FleetView>('grid');
   const [subscriberView, setSubscriberView] = useState<SubscriberView>('customer');
+  const [guideOpen, setGuideOpen] = useState(false);
   const { assignments, audit, resolutions, synced, syncError, log, assign, resolve, deflect } = useOpsPersistence();
   const clock = useClock();
 
@@ -89,18 +95,27 @@ export default function App() {
     setTab(r === 'executive' ? 'briefing' : 'overview');
   };
 
+  const openGuideStep = (step: GuideStep) => {
+    setRole('noc');
+    setTab(step.action.tab);
+    if (step.action.fleetView) setFleetView(step.action.fleetView);
+    if (step.action.subscriberView) setSubscriberView(step.action.subscriberView);
+  };
+
   return (
     <ErrorBoundary>
+      <a href="#main-content" className="skip-link">Skip to main content</a>
       <div className="min-h-screen">
-        <header className="sticky top-0 z-10 bg-[#0e2a47] text-white">
+        <header className="sticky top-0 z-10 bg-gradient-to-r from-[#2D3187] via-[#2d358b] to-[#1e40af] text-white">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#c9a227] font-bold text-[#0e2a47]">E</div>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#e9222f] font-bold text-white" aria-hidden="true">E</div>
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-[#c9a227]">Econet Wireless · Harare pilot</p>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-[#ffb3b8]">Econet Wireless · Harare pilot</p>
                 <h1 className="text-base font-bold leading-tight">Network compliance operations</h1>
               </div>
             </div>
+            <span className="sr-only" role="status">{openCases > 0 ? `${openCases} open compliance ${openCases === 1 ? 'case' : 'cases'}` : 'No open compliance cases'}</span>
             <div className="tnum flex items-center gap-3 text-xs text-blue-200">
               <span className="flex items-center gap-1">
                 <span className={`inline-block h-2 w-2 rounded-full ${error ? 'bg-amber-400' : 'bg-emerald-400'}`} />
@@ -111,11 +126,18 @@ export default function App() {
                 {syncError ? 'Ops offline' : synced ? 'Ops stored' : 'Ops syncing…'}
               </span>
               <span>{clock}</span>
+              <button
+                onClick={() => setGuideOpen(true)}
+                aria-haspopup="dialog"
+                className="flex items-center gap-1 rounded bg-white/10 px-2 py-1 text-xs font-semibold text-white hover:bg-white/20"
+              >
+                <Compass size={14} /> Demo guide
+              </button>
               <span className="flex items-center gap-1 rounded bg-white/10 p-1" role="group" aria-label="Acting role">
-                <button onClick={() => switchRole('noc')} className={`rounded px-2 py-0.5 font-semibold ${role === 'noc' ? 'bg-white text-[#0e2a47]' : 'text-blue-200'}`}>
+                <button onClick={() => switchRole('noc')} className={`rounded px-2 py-0.5 font-semibold ${role === 'noc' ? 'bg-white text-[#2d358b]' : 'text-blue-200'}`}>
                   NOC
                 </button>
-                <button onClick={() => switchRole('executive')} className={`rounded px-2 py-0.5 font-semibold ${role === 'executive' ? 'bg-[#c9a227] text-[#0e2a47]' : 'text-blue-200'}`}>
+                <button onClick={() => switchRole('executive')} className={`rounded px-2 py-0.5 font-semibold ${role === 'executive' ? 'bg-[#c80f22] text-white' : 'text-blue-200'}`}>
                   Executive
                 </button>
               </span>
@@ -127,7 +149,7 @@ export default function App() {
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 aria-current={tab === t.id ? 'page' : undefined}
-                className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${tab === t.id ? 'bg-white text-[#0e2a47]' : 'text-blue-200 hover:bg-white/10'}`}
+                className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${tab === t.id ? 'bg-white text-[#2d358b]' : 'text-blue-200 hover:bg-white/10'}`}
               >
                 {t.label}
                 {t.id === 'overview' && openCases > 0 && (
@@ -136,17 +158,17 @@ export default function App() {
               </button>
             ))}
             <div className="ml-auto flex items-center gap-1 rounded-lg bg-white/10 p-1 text-xs" role="group" aria-label="Network feed">
-              <button onClick={() => setFeed('live')} className={`rounded px-2 py-1 font-semibold ${feed === 'live' ? 'bg-white text-[#0e2a47]' : 'text-blue-200'}`}>
+              <button onClick={() => setFeed('live')} className={`rounded px-2 py-1 font-semibold ${feed === 'live' ? 'bg-white text-[#2d358b]' : 'text-blue-200'}`}>
                 Live feed
               </button>
-              <button onClick={() => setFeed('grid-event')} className={`rounded px-2 py-1 font-semibold ${feed === 'grid-event' ? 'bg-amber-400 text-[#0e2a47]' : 'text-blue-200'}`}>
+              <button onClick={() => setFeed('grid-event')} className={`rounded px-2 py-1 font-semibold ${feed === 'grid-event' ? 'bg-amber-400 text-[#2d358b]' : 'text-blue-200'}`}>
                 Grid event replay
               </button>
             </div>
           </nav>
         </header>
 
-        <main className="mx-auto max-w-6xl space-y-4 p-4">
+        <main id="main-content" tabIndex={-1} className="mx-auto max-w-6xl space-y-4 p-4">
           {feed === 'grid-event' && (
             <p className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900" role="status">
               <span className="font-bold">REPLAY</span> — ZESA 14:00 load-shedding schedule. Crew assignments made here are logged as drill actions.
@@ -186,10 +208,13 @@ export default function App() {
           {tab === 'fleet' && (
             <>
               <div className="flex items-center gap-1 rounded-lg bg-white/80 p-1 text-xs shadow-sm" role="group" aria-label="Fleet view">
-                <button onClick={() => setFleetView('grid')} className={`rounded px-2.5 py-1 font-semibold ${fleetView === 'grid' ? 'bg-[#0e2a47] text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+                <button onClick={() => setFleetView('grid')} className={`rounded px-2.5 py-1 font-semibold ${fleetView === 'grid' ? 'bg-[#2d358b] text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
                   Grid
                 </button>
-                <button onClick={() => setFleetView('map')} className={`rounded px-2.5 py-1 font-semibold ${fleetView === 'map' ? 'bg-[#0e2a47] text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+                <button onClick={() => setFleetView('table')} className={`rounded px-2.5 py-1 font-semibold ${fleetView === 'table' ? 'bg-[#2d358b] text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+                  Table
+                </button>
+                <button onClick={() => setFleetView('map')} className={`rounded px-2.5 py-1 font-semibold ${fleetView === 'map' ? 'bg-[#2d358b] text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
                   Map
                 </button>
               </div>
@@ -197,6 +222,8 @@ export default function App() {
                 <Suspense fallback={<div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500 shadow-sm">Loading map…</div>}>
                   <GeoMap towers={towers} />
                 </Suspense>
+              ) : fleetView === 'table' ? (
+                <FleetTable towers={towers} assignments={assignments} onAssign={(id) => handleAssign(id)} readOnly={readOnly} />
               ) : (
                 <FleetGrid towers={towers} loading={loading} assignments={assignments} onAssign={(id) => handleAssign(id)} readOnly={readOnly} />
               )}
@@ -206,10 +233,10 @@ export default function App() {
           {tab === 'subscribers' && (
             <>
               <div className="flex items-center gap-1 rounded-lg bg-white/80 p-1 text-xs shadow-sm" role="group" aria-label="Subscriber view">
-                <button onClick={() => setSubscriberView('customer')} className={`rounded px-2.5 py-1 font-semibold ${subscriberView === 'customer' ? 'bg-[#0e2a47] text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+                <button onClick={() => setSubscriberView('customer')} className={`rounded px-2.5 py-1 font-semibold ${subscriberView === 'customer' ? 'bg-[#2d358b] text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
                   Customer journey
                 </button>
-                <button onClick={() => setSubscriberView('care')} className={`rounded px-2.5 py-1 font-semibold ${subscriberView === 'care' ? 'bg-[#0e2a47] text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+                <button onClick={() => setSubscriberView('care')} className={`rounded px-2.5 py-1 font-semibold ${subscriberView === 'care' ? 'bg-[#2d358b] text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
                   Care desk
                 </button>
               </div>
@@ -248,14 +275,7 @@ export default function App() {
                 {audit.length === 0 ? (
                   <p className="mt-2 text-sm text-slate-500">No actions logged this shift. Crew assignments and care resolutions appear here for POTRAZ filing.</p>
                 ) : (
-                  <ol className="tnum mt-2 divide-y divide-slate-100 text-sm">
-                    {audit.map((a, i) => (
-                      <li key={i} className="py-1.5">
-                        <span className="text-slate-400">{new Date(a.time).toLocaleTimeString()}</span>{' '}
-                        <span className="font-semibold text-slate-800">{a.actor}</span> — {a.action}: {a.detail}
-                      </li>
-                    ))}
-                  </ol>
+                  <AuditLogTable audit={audit} />
                 )}
                 <p className="mt-2 text-[11px] text-slate-500">
                   Basis: SI 154 fines US$5,000 base + US$5,000/hr over 3 hrs, US$200/tower-month; model baseline 10,000 calls/mo, 15% billing-related, 30% deflection, 75% shielding — validate against Econet NOC and call-centre records before filing.
@@ -269,6 +289,7 @@ export default function App() {
           RadBit compliance sidecar · pilot v1.0 · {lastUpdated ? `synced ${new Date(lastUpdated).toLocaleString()}` : 'awaiting first sync'}
         </footer>
       </div>
+      <DemoGuide open={guideOpen} onClose={() => setGuideOpen(false)} onNavigate={openGuideStep} />
     </ErrorBoundary>
   );
 }

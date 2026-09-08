@@ -66,7 +66,7 @@ export default function ComplianceDossier({
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="POTRAZ compliance dossier">
       <div className="flex items-center gap-2">
-        <ShieldCheck size={18} className="text-[#0e2a47]" />
+        <ShieldCheck size={18} className="text-[#2d358b]" />
         <div>
           <h2 className="font-bold text-slate-900">POTRAZ Compliance Dossier</h2>
           <p className="text-xs text-slate-500">Formal SI 154 quarterly filing — generated-at statutory timestamp, QoS schedule, breach summary and audit ledger.</p>
@@ -77,7 +77,7 @@ export default function ComplianceDossier({
         <button
           onClick={exportPdf}
           disabled={busy !== null}
-          className="flex items-center gap-1.5 rounded-lg bg-[#0e2a47] px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-lg bg-[#2d358b] px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
           <FileDown size={15} /> {busy === 'pdf' ? 'Building PDF…' : 'Export PDF dossier'}
         </button>

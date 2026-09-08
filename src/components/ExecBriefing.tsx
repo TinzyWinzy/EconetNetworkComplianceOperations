@@ -56,10 +56,10 @@ export default function ExecBriefing({
 
   return (
     <div className="space-y-4">
-      <section className="overflow-hidden rounded-2xl bg-[#0e2a47] text-white shadow-sm" aria-label="Executive posture">
+      <section className="overflow-hidden rounded-2xl bg-[#2d358b] text-white shadow-sm" aria-label="Executive posture">
         <div className="flex flex-wrap items-center justify-between gap-2 p-4">
           <div className="flex items-center gap-2">
-            <ShieldCheck size={20} className="text-[#c9a227]" />
+            <ShieldCheck size={20} className="text-[#ffb3b8]" />
             <div>
               <h2 className="font-bold">Compliance posture — {posture === 'nominal' ? 'Nominal' : posture === 'watch' ? 'Watch' : 'Action required'}</h2>
               <p className="tnum text-xs text-blue-200">
@@ -67,7 +67,7 @@ export default function ExecBriefing({
               </p>
             </div>
           </div>
-          <button onClick={exportEvidence} className="flex items-center gap-1 rounded-lg bg-[#c9a227] px-3 py-1.5 text-sm font-bold text-[#0e2a47]">
+          <button onClick={exportEvidence} className="flex items-center gap-1 rounded-lg bg-[#c80f22] px-3 py-1.5 text-sm font-bold text-white">
             <FileDown size={14} /> Evidence pack
           </button>
         </div>

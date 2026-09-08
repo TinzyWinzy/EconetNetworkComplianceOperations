@@ -99,7 +99,7 @@ export default function PhoneSimulator({ onDeflect }: { onDeflect: (detail: stri
           <h2 className="flex items-center gap-2 font-bold text-slate-900"><Smartphone size={18} /> My-Data portal</h2>
           <div className="flex gap-1 rounded-lg bg-slate-100 p-1 text-xs" role="group" aria-label="Plan size">
             {[50, 100].map((g) => (
-              <button key={g} onClick={() => resetFor(g)} className={`rounded px-2 py-1 font-semibold ${planGb === g ? 'bg-[#0e2a47] text-white' : 'text-slate-600'}`}>
+              <button key={g} onClick={() => resetFor(g)} className={`rounded px-2 py-1 font-semibold ${planGb === g ? 'bg-[#2d358b] text-white' : 'text-slate-600'}`}>
                 {g}GB
               </button>
             ))}
@@ -133,7 +133,7 @@ export default function PhoneSimulator({ onDeflect }: { onDeflect: (detail: stri
               step={1}
               value={usageGb}
               onChange={(e) => onSlider(Number(e.target.value))}
-              className="mt-3 w-full accent-[#0e2a47]"
+              className="mt-3 w-full accent-[#2d358b]"
               aria-label="Simulate data usage"
             />
             <p className="text-[10px] text-slate-400">Drag to simulate consumption past 50 / 80 / 90 / 100%.</p>
@@ -157,7 +157,7 @@ export default function PhoneSimulator({ onDeflect }: { onDeflect: (detail: stri
                         Got it
                       </button>
                       {e.threshold >= 80 && (
-                        <button onClick={() => { ack(e.id, 'FUP EXTEND self-served — no support call'); extend(); }} className="rounded bg-[#c9a227] px-1.5 py-0.5 text-[10px] font-bold text-[#0e2a47]">
+                        <button onClick={() => { ack(e.id, 'FUP EXTEND self-served — no support call'); extend(); }} className="rounded bg-[#c80f22] px-1.5 py-0.5 text-[10px] font-bold text-white">
                           EXTEND
                         </button>
                       )}
@@ -186,7 +186,7 @@ export default function PhoneSimulator({ onDeflect }: { onDeflect: (detail: stri
           </div>
           <div className="rounded-xl bg-slate-50 p-2">
             <p className="text-[11px] uppercase text-slate-500">Saved</p>
-            <p className="text-xl font-bold text-[#c9a227]">US${(ackedCount * 10).toLocaleString()}</p>
+            <p className="text-xl font-bold text-[#c80f22]">US${(ackedCount * 10).toLocaleString()}</p>
           </div>
         </div>
 

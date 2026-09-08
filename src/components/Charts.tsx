@@ -101,7 +101,7 @@ export function BarList({
               style={{
                 width: `${(r.value / max) * 100}%`,
                 minWidth: r.value > 0 ? '1.5rem' : undefined,
-                background: bandColor ? bandColor(r.value) : '#0e2a47'
+                background: bandColor ? bandColor(r.value) : '#2d358b'
               }}
             >
               {r.value}
