@@ -7,6 +7,9 @@
 export interface TowerTelemetry {
   id: string;
   name: string;
+  region: string;
+  latitude: number;
+  longitude: number;
   status: 'Online' | 'Backup Battery' | 'Offline';
   batteryCapacityPercent: number;
   cellAvailabilityPercent: number;
@@ -48,11 +51,22 @@ export interface LegacyTower {
 }
 
 export function toCanonical(t: LegacyTower | TowerTelemetry): TowerTelemetry {
-  if ('cellAvailabilityPercent' in t) return t as TowerTelemetry;
+  if ('cellAvailabilityPercent' in t) {
+    const c = t as TowerTelemetry;
+    return {
+      ...c,
+      region: c.region ?? c.name.split(' Base-Station')[0],
+      latitude: c.latitude ?? 0,
+      longitude: c.longitude ?? 0
+    };
+  }
   const l = t as LegacyTower;
   return {
     id: l.id,
     name: l.name,
+    region: l.name.split(' Base-Station')[0],
+    latitude: 0,
+    longitude: 0,
     status: l.status,
     batteryCapacityPercent: l.batteryPct ?? (l.status === 'Online' ? 100 : 0),
     cellAvailabilityPercent: l.cellAvailability,

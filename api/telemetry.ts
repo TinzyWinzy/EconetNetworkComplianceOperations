@@ -2,9 +2,9 @@
 // Returns TowerTelemetry[] (spec §3.1). Legacy {towers} wrapper available via ?shape=wrapped.
 // Read-only, Zero-PII, no Econet core writes.
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import type { TowerTelemetry } from '../src/types';
+import { buildTelemetry } from '../src/lib/towers';
 
-const NAMES = ['Harare CBD', 'Avondale', 'Borrowdale', 'Gweru', 'Bulawayo', 'Mutare', 'Chitungwiza', 'Ruwa'];
+export { buildTelemetry };
 
 function setCors(res: VercelResponse): void {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -12,44 +12,6 @@ function setCors(res: VercelResponse): void {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate=30');
   res.setHeader('Content-Type', 'application/json');
-}
-
-export function buildTelemetry(loadShedding: boolean): TowerTelemetry[] {
-  return Array.from({ length: 100 }, (_, i) => {
-    const id = `T${String(i + 1).padStart(3, '0')}`;
-    let status: TowerTelemetry['status'] = 'Online';
-    let batteryCapacityPercent = 100;
-    let cellAvailabilityPercent = 99.8;
-    let dsasrPercent = 97.4;
-    let dsdrPercent = 1.1;
-    let droppedCallRatePercent = 0.8;
-    let activeOutageDurationMinutes = 0;
-    if (loadShedding && i % 7 === 0) {
-      status = 'Backup Battery';
-      batteryCapacityPercent = Math.max(12, 100 - i * 3);
-      cellAvailabilityPercent = 78.5;
-      if (batteryCapacityPercent < 15) {
-        status = 'Offline';
-        batteryCapacityPercent = 0;
-        cellAvailabilityPercent = 54.2;
-        dsasrPercent = 0.0;
-        dsdrPercent = 100.0;
-        droppedCallRatePercent = 100.0;
-        activeOutageDurationMinutes = 185 + i * 2;
-      }
-    }
-    return {
-      id,
-      name: `${NAMES[i % NAMES.length]} Base-Station ${i + 1}`,
-      status,
-      batteryCapacityPercent,
-      cellAvailabilityPercent,
-      dsasrPercent,
-      dsdrPercent,
-      droppedCallRatePercent,
-      activeOutageDurationMinutes
-    };
-  });
 }
 
 export default function handler(req: VercelRequest, res: VercelResponse): void {

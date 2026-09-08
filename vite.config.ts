@@ -171,6 +171,45 @@ function radbitMockApi(): Plugin {
           res.end(JSON.stringify({ hashedMsisdn, activePlan: `Private ${effLimit}GB FUP Limit`, dataUsedGb: parseFloat(actualUsage.toFixed(2)), fupLimitGb: effLimit, fupRatioPercent, currentSpeedKbps, notifiedThresholds }));
           return;
         }
+        if (url.pathname === '/api/sms') {
+          if (req.method !== 'POST') {
+            send(405, { error: 'Method not allowed. Use POST /api/sms.' });
+            return;
+          }
+          let raw = '';
+          req.on('data', (chunk: Buffer) => (raw += chunk.toString()));
+          req.on('end', () => {
+            let body: Record<string, unknown> = {};
+            try {
+              body = raw ? JSON.parse(raw) : {};
+            } catch {
+              body = {};
+            }
+            const hashedMsisdn = typeof body.hashedMsisdn === 'string' ? body.hashedMsisdn : '';
+            const message = typeof body.message === 'string' ? body.message : '';
+            if (!hashedMsisdn || !/^[a-f0-9]{64}$/i.test(hashedMsisdn) || !message) {
+              send(400, { error: 'Missing or invalid hashedMsisdn/message.' });
+              return;
+            }
+            const latencyMs = 120 + Math.floor(Math.random() * 1180);
+            send(200, {
+              status: 'sent',
+              simulated: true,
+              messageId: `sms_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+              dispatchedAt: new Date().toISOString(),
+              latencyMs,
+              slaMs: 1500,
+              slaMet: latencyMs < 1500,
+              payload: {
+                channel: 'SMS',
+                destinationHash: `${hashedMsisdn.slice(0, 12)}…${hashedMsisdn.slice(-6)}`,
+                thresholdPct: Number(body.thresholdPct),
+                message
+              }
+            });
+          });
+          return;
+        }
         next();
       });
     }

@@ -121,5 +121,17 @@ export function useOpsPersistence() {
     [sync]
   );
 
-  return { ...state, log, assign, resolve };
+  const deflect = useCallback(
+    (detail: string) => {
+      setState((prev) => ({
+        ...prev,
+        resolutions: prev.resolutions + 1,
+        audit: [{ time: new Date().toISOString(), actor: 'Subscriber', action: 'FUP alert self-served', detail }, ...prev.audit].slice(0, MAX_AUDIT)
+      }));
+      sync();
+    },
+    [sync]
+  );
+
+  return { ...state, log, assign, resolve, deflect };
 }

@@ -11,6 +11,9 @@ CREATE TABLE IF NOT EXISTS towers (
     status VARCHAR(20) DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'MAINTENANCE', 'DEGRADED', 'DOWN')),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+-- GIS columns (Phase 0): deterministic Harare-region coordinates for the map.
+ALTER TABLE towers ADD COLUMN IF NOT EXISTS latitude DECIMAL(9,6);
+ALTER TABLE towers ADD COLUMN IF NOT EXISTS longitude DECIMAL(9,6);
 
 -- 2. Tower telemetry (hourly snapshots; pilot writes on poll, capped by cleanup job)
 CREATE TABLE IF NOT EXISTS tower_telemetry_hourly (

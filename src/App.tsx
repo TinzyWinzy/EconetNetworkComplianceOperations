@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, lazy, Suspense } from 'react';
 import NOCDashboard from './components/NOCDashboard';
 import Incidents from './components/Incidents';
 import FleetGrid from './components/FleetGrid';
 import ActionQueue from './components/ActionQueue';
 import ExecBriefing from './components/ExecBriefing';
 import SubscriberCare from './components/SubscriberCare';
+import PhoneSimulator from './components/PhoneSimulator';
 import ComplianceValue from './components/ComplianceValue';
+import ComplianceDossier from './components/ComplianceDossier';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useTowerTelemetry } from './hooks/useTowerTelemetry';
 import { useOpsPersistence } from './hooks/useOpsPersistence';
@@ -13,9 +15,13 @@ import { calculateDynamicROI } from './lib/roi';
 import { exposureOf } from './lib/exposure';
 import type { AuditEntry } from './types';
 
+const GeoMap = lazy(() => import('./components/GeoMap'));
+
 type Tab = 'overview' | 'briefing' | 'fleet' | 'subscribers' | 'reports';
 type Feed = 'live' | 'grid-event';
 type Role = 'noc' | 'executive';
+type FleetView = 'grid' | 'map';
+type SubscriberView = 'customer' | 'care';
 
 function useClock(): string {
   const [now, setNow] = useState(() => new Date());
@@ -32,7 +38,9 @@ export default function App() {
   const [feed, setFeed] = useState<Feed>('live');
   const [module1, setModule1] = useState(true);
   const [module2, setModule2] = useState(true);
-  const { assignments, audit, resolutions, synced, syncError, log, assign, resolve } = useOpsPersistence();
+  const [fleetView, setFleetView] = useState<FleetView>('grid');
+  const [subscriberView, setSubscriberView] = useState<SubscriberView>('customer');
+  const { assignments, audit, resolutions, synced, syncError, log, assign, resolve, deflect } = useOpsPersistence();
   const clock = useClock();
 
   // Assign with QoS shield guard + audit trail (mirrors previous local behaviour).
@@ -176,13 +184,46 @@ export default function App() {
           )}
 
           {tab === 'fleet' && (
-            <FleetGrid towers={towers} loading={loading} assignments={assignments} onAssign={(id) => handleAssign(id)} readOnly={readOnly} />
+            <>
+              <div className="flex items-center gap-1 rounded-lg bg-white/80 p-1 text-xs shadow-sm" role="group" aria-label="Fleet view">
+                <button onClick={() => setFleetView('grid')} className={`rounded px-2.5 py-1 font-semibold ${fleetView === 'grid' ? 'bg-[#0e2a47] text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+                  Grid
+                </button>
+                <button onClick={() => setFleetView('map')} className={`rounded px-2.5 py-1 font-semibold ${fleetView === 'map' ? 'bg-[#0e2a47] text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+                  Map
+                </button>
+              </div>
+              {fleetView === 'map' ? (
+                <Suspense fallback={<div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-500 shadow-sm">Loading map…</div>}>
+                  <GeoMap towers={towers} />
+                </Suspense>
+              ) : (
+                <FleetGrid towers={towers} loading={loading} assignments={assignments} onAssign={(id) => handleAssign(id)} readOnly={readOnly} />
+              )}
+            </>
           )}
 
-          {tab === 'subscribers' && <SubscriberCare onResolve={resolve} readOnly={readOnly} />}
+          {tab === 'subscribers' && (
+            <>
+              <div className="flex items-center gap-1 rounded-lg bg-white/80 p-1 text-xs shadow-sm" role="group" aria-label="Subscriber view">
+                <button onClick={() => setSubscriberView('customer')} className={`rounded px-2.5 py-1 font-semibold ${subscriberView === 'customer' ? 'bg-[#0e2a47] text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+                  Customer journey
+                </button>
+                <button onClick={() => setSubscriberView('care')} className={`rounded px-2.5 py-1 font-semibold ${subscriberView === 'care' ? 'bg-[#0e2a47] text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+                  Care desk
+                </button>
+              </div>
+              {subscriberView === 'customer' ? (
+                <PhoneSimulator onDeflect={deflect} />
+              ) : (
+                <SubscriberCare onResolve={resolve} readOnly={readOnly} />
+              )}
+            </>
+          )}
 
           {tab === 'reports' && (
             <>
+              <ComplianceDossier towers={towers} audit={audit} resolutions={resolutions} module1={module1} module2={module2} />
               <ComplianceValue roi={roi} towers={towers} resolutions={resolutions} module1={module1} module2={module2} />
               <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="Shift audit log">
                 <div className="flex flex-wrap items-center justify-between gap-2">
