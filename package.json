@@ -8,6 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "migrate": "node db/migrate.mjs",
+    "seed:subscribers": "node db/seed-subscribers.mjs",
     "verify:db": "node db/verify.mjs"
   },
   "dependencies": {

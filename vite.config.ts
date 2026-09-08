@@ -127,6 +127,24 @@ function radbitMockApi(): Plugin {
           }
           const usageRaw = url.searchParams.get('dataConsumed') ?? url.searchParams.get('dataUsed') ?? url.searchParams.get('dataUsedGB');
           const limitRaw = url.searchParams.get('fupLimit');
+
+          // DB-first: mirror the seeded Neon 'subscribers' cohort so dev behaves like prod.
+          const devSubscribers: Record<string, { gb: number; limit: number; throttled: boolean }> = {
+            '0771111111': { gb: 4.2, limit: 100, throttled: false },
+            '0771111112': { gb: 22.8, limit: 100, throttled: false },
+            '0771111113': { gb: 49.6, limit: 100, throttled: false },
+            '0771111114': { gb: 51.3, limit: 100, throttled: false },
+            '0771111115': { gb: 75.0, limit: 100, throttled: false },
+            '0771111116': { gb: 82.4, limit: 100, throttled: false },
+            '0771111117': { gb: 90.9, limit: 100, throttled: false },
+            '0771111118': { gb: 98.2, limit: 100, throttled: false },
+            '0771111119': { gb: 100.0, limit: 100, throttled: true },
+            '0771111120': { gb: 104.7, limit: 100, throttled: true },
+            '0712222221': { gb: 30.5, limit: 50, throttled: false },
+            '0773333333': { gb: 16.0, limit: 100, throttled: false }
+          };
+          const devHit = rawMsisdn ? devSubscribers[rawMsisdn.replace(/[\s+()-]/g, '')] : null;
+
           const dataConsumedGb = usageRaw === null ? 0 : parseFloat(usageRaw);
           const fupLimitGb = limitRaw === null ? DEFAULT_FUP_GB : parseFloat(limitRaw);
           if ((usageRaw !== null && (!Number.isFinite(dataConsumedGb) || dataConsumedGb < 0)) || !Number.isFinite(fupLimitGb) || fupLimitGb <= 0) {
@@ -135,9 +153,12 @@ function radbitMockApi(): Plugin {
             res.end(JSON.stringify({ error: 'Invalid usage values. dataConsumed must be >= 0, fupLimit > 0.' }));
             return;
           }
-          const actualUsage = Math.min(dataConsumedGb, 110);
-          const fupRatioPercent = Math.round((actualUsage / fupLimitGb) * 100);
-          const currentSpeedKbps = actualUsage >= fupLimitGb ? 128 : 20000;
+
+          const actualUsage = devHit ? devHit.gb : Math.min(dataConsumedGb, 110);
+          const effLimit = devHit ? devHit.limit : fupLimitGb;
+          const throttled = devHit?.throttled ?? false;
+          const fupRatioPercent = Math.round((actualUsage / effLimit) * 100);
+          const currentSpeedKbps = throttled || actualUsage >= effLimit ? 128 : 20000;
           const notifiedThresholds: number[] = [];
           if (fupRatioPercent >= 50) notifiedThresholds.push(50);
           if (fupRatioPercent >= 80) notifiedThresholds.push(80);
@@ -147,7 +168,7 @@ function radbitMockApi(): Plugin {
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Access-Control-Allow-Origin', '*');
           res.setHeader('Cache-Control', 'no-store');
-          res.end(JSON.stringify({ hashedMsisdn, activePlan: `Private ${fupLimitGb}GB FUP Limit`, dataUsedGb: parseFloat(actualUsage.toFixed(2)), fupLimitGb, fupRatioPercent, currentSpeedKbps, notifiedThresholds }));
+          res.end(JSON.stringify({ hashedMsisdn, activePlan: `Private ${effLimit}GB FUP Limit`, dataUsedGb: parseFloat(actualUsage.toFixed(2)), fupLimitGb: effLimit, fupRatioPercent, currentSpeedKbps, notifiedThresholds }));
           return;
         }
         next();
