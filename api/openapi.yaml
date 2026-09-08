@@ -1,0 +1,372 @@
+openapi: 3.1.0
+info:
+  title: Econet Customer Trust & Regulatory Compliance Suite — Pilot API
+  version: 1.0.0
+  description: >
+    Read-only compliance sidecar for Econet Wireless Zimbabwe (Harare regional
+    pilot, 100 towers). Exposes telemetry, subscriber FUP state, operational
+    persistence and a simulated notification gateway.
+
+    Zero-PII: subscriber identity is an HMAC-SHA256 hex digest only; raw
+    MSISDN is never stored or logged (Cyber & Data Protection Act 2021).
+
+    Statutory reference — SI 154 of 2024: Cell Availability >= 67%, DSASR >=
+    95%, DSDR <= 2%; outage fines US$5,000 flat + US$5,000/hr past 3 hours
+    (US$110,000/day cap), US$200/tower-month for breach.
+
+    Production ingestion endpoints (POST /api/v1/telemetry/tower and
+    POST /api/v1/billing/usage, Bearer JWT) are specified in
+    technical-specs-erd.md but not yet implemented — pilot uses the
+    serverless functions below.
+  contact:
+    name: RadBit Studios
+  license:
+    name: Proprietary
+    identifier: LicenseRef-Proprietary
+
+servers:
+  - url: https://econet-network-compliance-operations.vercel.app
+    description: Production (Vercel serverless)
+  - url: http://localhost:5174
+    description: Local development (Vite mock middleware)
+
+tags:
+  - name: Telemetry
+    description: Network QoS telemetry (Module 1)
+  - name: Billing
+    description: Subscriber FUP / data-usage state (Module 2)
+  - name: Operations
+    description: Crew assignments, audit ledger, care resolutions
+  - name: Notifications
+    description: Simulated SMS/push gateway
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/telemetry:
+    get:
+      tags: [Telemetry]
+      summary: Pilot tower QoS telemetry (100 Harare sites)
+      description: >
+        Deterministic synthetic telemetry. With `loadShedding=true`, a cohort
+        of towers transitions to backup battery or offline, simulating ZESA
+        load-shedding and SI 154 breach exposure.
+      parameters:
+        - name: loadShedding
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Enable the ZESA load-shedding scenario.
+        - name: shape
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [wrapped]
+          description: Return a `{generatedAt, pilot, statutoryLimits, towers}` envelope.
+      responses:
+        '200':
+          description: Telemetry payload
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: array
+                    items: { $ref: '#/components/schemas/TowerTelemetry' }
+                  - $ref: '#/components/schemas/TelemetryEnvelope'
+        '400':
+          description: Invalid loadShedding value
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/billing:
+    get:
+      tags: [Billing]
+      summary: Subscriber FUP profile
+      description: >
+        Resolves a subscriber's FUP state from the seeded cohort (Neon) or a
+        stateless calculator fallback. Prefer `hashedMsisdn`; a raw `msisdn`
+        is accepted and hashed at the boundary only.
+      parameters:
+        - name: hashedMsisdn
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: '^[a-fA-F0-9]{64}$'
+          description: HMAC-SHA256 hex digest (preferred).
+        - name: msisdn
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: '^\d{9,15}$'
+          description: Raw MSISDN (hashed at boundary, never persisted).
+        - name: dataConsumed
+          in: query
+          required: false
+          schema:
+            type: number
+            minimum: 0
+          description: Usage override in GB (calculator fallback only).
+        - name: fupLimit
+          in: query
+          required: false
+          schema:
+            type: number
+            minimum: 0
+          description: FUP limit in GB (default 100).
+      responses:
+        '200':
+          description: Subscriber profile
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubscriberProfile' }
+        '400':
+          description: Missing or invalid subscriber key / usage values
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/ops:
+    get:
+      tags: [Operations]
+      summary: Read operational state
+      responses:
+        '200':
+          description: Crew assignments, audit log, resolution count
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OpsState' }
+        '500':
+          description: Database unavailable
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+    post:
+      tags: [Operations]
+      summary: Reconcile operational state
+      description: Bulk upsert of assignments, append audit entries, reconcile resolution counter.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                assignments:
+                  type: array
+                  items: { $ref: '#/components/schemas/CrewAssignment' }
+                audit:
+                  type: array
+                  items: { $ref: '#/components/schemas/AuditEntry' }
+                resolutions:
+                  type: number
+                  minimum: 0
+      responses:
+        '200':
+          description: Reconciliation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  auditCount: { type: integer }
+        '500':
+          description: Persistence failure
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/sms:
+    post:
+      tags: [Notifications]
+      summary: Dispatch simulated SMS/push notification
+      description: >
+        Validates the customer-journey dispatch path and measures delivery
+        latency against the 1.5s SLA (NFR-1.3). Simulator only — no real
+        gateway is called.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [hashedMsisdn, message]
+              properties:
+                hashedMsisdn:
+                  type: string
+                  pattern: '^[a-fA-F0-9]{64}$'
+                thresholdPct:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+                message:
+                  type: string
+      responses:
+        '200':
+          description: Dispatch result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SmsDispatch' }
+        '400':
+          description: Missing/invalid hashedMsisdn or message
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    TowerTelemetry:
+      type: object
+      required: [id, name, region, latitude, longitude, status, batteryCapacityPercent, cellAvailabilityPercent, dsasrPercent, dsdrPercent, droppedCallRatePercent, activeOutageDurationMinutes]
+      properties:
+        id:
+          type: string
+          example: T001
+        name:
+          type: string
+          example: Harare CBD Base-Station 1
+        region:
+          type: string
+          example: Harare CBD
+        latitude:
+          type: number
+          format: double
+          example: -17.825
+        longitude:
+          type: number
+          format: double
+          example: 31.033
+        status:
+          type: string
+          enum: [Online, 'Backup Battery', Offline]
+        batteryCapacityPercent:
+          type: number
+          minimum: 0
+          maximum: 100
+        cellAvailabilityPercent:
+          type: number
+          description: SI 154 floor >= 67%
+        dsasrPercent:
+          type: number
+          description: Data Service Access Success Rate, >= 95%
+        dsdrPercent:
+          type: number
+          description: Data Service Drop Rate, <= 2%
+        droppedCallRatePercent:
+          type: number
+        activeOutageDurationMinutes:
+          type: integer
+
+    SubscriberProfile:
+      type: object
+      properties:
+        hashedMsisdn:
+          type: string
+          pattern: '^[a-fA-F0-9]{64}$'
+        activePlan:
+          type: string
+        dataUsedGb:
+          type: number
+        fupLimitGb:
+          type: number
+        fupRatioPercent:
+          type: number
+        currentSpeedKbps:
+          type: number
+          description: 20000 (4G) or 128 (throttled)
+        notifiedThresholds:
+          type: array
+          items:
+            type: number
+
+    TelemetryEnvelope:
+      type: object
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+        pilot:
+          type: string
+        statutoryLimits:
+          type: object
+          properties:
+            cellAvailability: { type: number }
+            dsasr: { type: number }
+            dsdr: { type: number }
+        towers:
+          type: array
+          items: { $ref: '#/components/schemas/TowerTelemetry' }
+
+    CrewAssignment:
+      type: object
+      properties:
+        towerId: { type: string }
+        crew: { type: string }
+        assignedAt: { type: string, format: date-time }
+        note: { type: string }
+
+    AuditEntry:
+      type: object
+      properties:
+        time: { type: string, format: date-time }
+        actor: { type: string }
+        action: { type: string }
+        detail: { type: string }
+
+    OpsState:
+      type: object
+      properties:
+        assignments:
+          type: array
+          items: { $ref: '#/components/schemas/CrewAssignment' }
+        audit:
+          type: array
+          items: { $ref: '#/components/schemas/AuditEntry' }
+        resolutions:
+          type: integer
+
+    SmsDispatch:
+      type: object
+      properties:
+        status:
+          type: string
+          example: sent
+        simulated:
+          type: boolean
+        messageId:
+          type: string
+        dispatchedAt:
+          type: string
+          format: date-time
+        latencyMs:
+          type: integer
+        slaMs:
+          type: integer
+          example: 1500
+        slaMet:
+          type: boolean
+        payload:
+          type: object
+          properties:
+            channel: { type: string, example: SMS }
+            destinationHash: { type: string }
+            thresholdPct: { type: number }
+            message: { type: string }
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string

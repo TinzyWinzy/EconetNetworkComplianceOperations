@@ -9,4 +9,7 @@ dist/
 Thumbs.db
 .vscode/
 
+# logs + test artifacts
+*.log
+
 .vercel

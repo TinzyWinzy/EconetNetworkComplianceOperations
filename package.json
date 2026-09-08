@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "migrate": "node db/migrate.mjs",
     "seed:subscribers": "node db/seed-subscribers.mjs",
-    "verify:db": "node db/verify.mjs"
+    "verify:db": "node db/verify.mjs",
+    "e2e": "node e2e/smoke.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
@@ -28,6 +29,7 @@
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "playwright": "^1.63.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.16",
     "typescript": "^5.6.3",

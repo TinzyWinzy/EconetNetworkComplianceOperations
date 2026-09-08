@@ -12,6 +12,7 @@ import ComplianceValue from './components/ComplianceValue';
 import ComplianceDossier from './components/ComplianceDossier';
 import DemoGuide from './components/DemoGuide';
 import AuditLogTable from './components/AuditLogTable';
+import Integration from './components/Integration';
 import type { GuideStep } from './components/DemoGuide';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useTowerTelemetry } from './hooks/useTowerTelemetry';
@@ -22,7 +23,7 @@ import type { AuditEntry } from './types';
 
 const GeoMap = lazy(() => import('./components/GeoMap'));
 
-type Tab = 'overview' | 'briefing' | 'fleet' | 'subscribers' | 'reports';
+type Tab = 'overview' | 'briefing' | 'fleet' | 'subscribers' | 'reports' | 'integration';
 type Feed = 'live' | 'grid-event';
 type Role = 'noc' | 'executive';
 type FleetView = 'grid' | 'table' | 'map';
@@ -80,13 +81,15 @@ export default function App() {
           { id: 'briefing', label: 'Briefing' },
           { id: 'fleet', label: 'Tower fleet' },
           { id: 'subscribers', label: 'Subscribers' },
-          { id: 'reports', label: 'Evidence' }
+          { id: 'reports', label: 'Evidence' },
+          { id: 'integration', label: 'Integration' }
         ]
       : [
           { id: 'overview', label: 'Overview' },
           { id: 'fleet', label: 'Tower fleet' },
           { id: 'subscribers', label: 'Subscribers' },
-          { id: 'reports', label: 'Reports' }
+          { id: 'reports', label: 'Reports' },
+          { id: 'integration', label: 'Integration' }
         ];
   const readOnly = role === 'executive';
 
@@ -283,6 +286,8 @@ export default function App() {
               </section>
             </>
           )}
+
+          {tab === 'integration' && <Integration />}
         </main>
 
         <footer className="tnum mx-auto max-w-6xl px-4 pb-8 text-[11px] text-slate-500">
