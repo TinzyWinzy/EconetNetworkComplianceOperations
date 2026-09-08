@@ -12,7 +12,16 @@ const DEFAULT_FUP_GB = Number(process.env.FUP_LIMIT_GB || 100);
  * and fetch().json() threw "Unexpected token 'c'". Prod (Vercel) still uses api/*.ts.
  * Mirrors api/telemetry.ts + api/billing.ts contracts exactly.
  */
+// In-memory dev persistence mirroring/api/ops against Neon in prod.
+// Dev has no Neon reachable by default, so we keep state in memory for the session.
+interface MockOpsState {
+  assignments: Record<string, { crew: string; assignedAt: string; note: string }>;
+  audit: { time: string; actor: string; action: string; detail: string }[];
+  resolutions: number;
+}
+
 function radbitMockApi(): Plugin {
+  const opsState: MockOpsState = { assignments: {}, audit: [], resolutions: 0 };
   return {
     name: 'radbit-mock-api',
     apply: 'serve',
@@ -20,6 +29,58 @@ function radbitMockApi(): Plugin {
       server.middlewares.use((req, res, next) => {
         if (!req.url) return next();
         const url = new URL(req.url, 'http://localhost');
+        const send = (status: number, obj: unknown) => {
+          res.statusCode = status;
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.end(JSON.stringify(obj));
+        };
+        if (url.pathname === '/api/ops') {
+          if (req.method === 'GET') {
+            send(200, {
+              assignments: Object.entries(opsState.assignments).map(([towerId, a]) => ({ towerId, ...a })),
+              audit: opsState.audit,
+              resolutions: opsState.resolutions
+            });
+            return;
+          }
+          if (req.method === 'POST') {
+            let raw = '';
+            req.on('data', (chunk: Buffer) => (raw += chunk.toString()));
+            req.on('end', () => {
+              let data: Partial<MockOpsState> & { assignments?: unknown; audit?: unknown } = {};
+              try {
+                data = raw ? JSON.parse(raw) : {};
+              } catch {
+                data = {};
+              }
+              const assignments = Array.isArray(data.assignments)
+                ? (data.assignments as { towerId: string; crew: string; assignedAt: string; note?: string }[])
+                : [];
+              for (const a of assignments) {
+                opsState.assignments[a.towerId] = { crew: a.crew, assignedAt: a.assignedAt, note: a.note || '' };
+              }
+              const audit = Array.isArray(data.audit)
+                ? (data.audit as { time: string; actor: string; action: string; detail: string }[])
+                : [];
+              const seen = new Set(opsState.audit.map((x) => `${x.time}|${x.actor}|${x.action}|${x.detail}`));
+              for (const a of audit) {
+                const key = `${a.time}|${a.actor}|${a.action}|${a.detail}`;
+                if (!seen.has(key)) {
+                  seen.add(key);
+                  opsState.audit.push(a);
+                }
+              }
+              if (typeof data.resolutions === 'number') {
+                opsState.resolutions = Math.max(opsState.resolutions, data.resolutions);
+              }
+              send(200, { ok: true, auditCount: opsState.audit.length });
+            });
+            return;
+          }
+          send(405, { error: 'Method not allowed. Use GET or POST /api/ops.' });
+          return;
+        }
         if (url.pathname === '/api/telemetry') {
           const raw = url.searchParams.get('loadShedding');
           const loadShedding = raw === 'true' || raw === '1';

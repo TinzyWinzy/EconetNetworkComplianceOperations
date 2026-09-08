@@ -8,9 +8,10 @@ import SubscriberCare from './components/SubscriberCare';
 import ComplianceValue from './components/ComplianceValue';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useTowerTelemetry } from './hooks/useTowerTelemetry';
+import { useOpsPersistence } from './hooks/useOpsPersistence';
 import { calculateDynamicROI } from './lib/roi';
 import { exposureOf } from './lib/exposure';
-import { AuditEntry, CrewAssignment } from './types';
+import type { AuditEntry } from './types';
 
 type Tab = 'overview' | 'briefing' | 'fleet' | 'subscribers' | 'reports';
 type Feed = 'live' | 'grid-event';
@@ -31,10 +32,16 @@ export default function App() {
   const [feed, setFeed] = useState<Feed>('live');
   const [module1, setModule1] = useState(true);
   const [module2, setModule2] = useState(true);
-  const [assignments, setAssignments] = useState<Map<string, CrewAssignment>>(new Map());
-  const [resolutions, setResolutions] = useState(0);
-  const [audit, setAudit] = useState<AuditEntry[]>([]);
+  const { assignments, audit, resolutions, synced, syncError, log, assign, resolve } = useOpsPersistence();
   const clock = useClock();
+
+  // Assign with QoS shield guard + audit trail (mirrors previous local behaviour).
+  const handleAssign = (towerId: string, crew = 'Crew A — North') => {
+    if (!module1) return;
+    assign(towerId, crew);
+    const t = live.find((x) => x.id === towerId);
+    log('NOC Operator', 'Crew assigned', `${towerId} ${t ? t.name : ''} → ${crew}`);
+  };
 
   const shedding = feed === 'grid-event';
   const { towers: live, loading, error, lastUpdated, refresh } = useTowerTelemetry(shedding);
@@ -52,26 +59,6 @@ export default function App() {
 
   const roi = useMemo(() => calculateDynamicROI(towers, 0, module1, module2), [towers, module1, module2]);
   const openCases = useMemo(() => towers.filter((t) => exposureOf(t) > 0 && !assignments.has(t.id)).length, [towers, assignments]);
-
-  const log = (actor: string, action: string, detail: string) =>
-    setAudit((a) => [{ time: new Date().toISOString(), actor, action, detail }, ...a].slice(0, 50));
-
-  const assign = (towerId: string, crew = 'Crew A — North') => {
-    if (!module1) return;
-    const entry: CrewAssignment = { towerId, crew, assignedAt: new Date().toISOString(), note: 'Diesel + traffic shift' };
-    setAssignments((prev) => {
-      const next = new Map(prev);
-      next.set(towerId, entry);
-      return next;
-    });
-    const t = live.find((x) => x.id === towerId);
-    log('NOC Operator', 'Crew assigned', `${towerId} ${t ? t.name : ''} → ${crew}`);
-  };
-
-  const resolve = (detail: string) => {
-    setResolutions((r) => r + 1);
-    log('Care Agent', 'Case resolved', detail);
-  };
 
   const tabs: { id: Tab; label: string }[] =
     role === 'executive'
@@ -110,6 +97,10 @@ export default function App() {
               <span className="flex items-center gap-1">
                 <span className={`inline-block h-2 w-2 rounded-full ${error ? 'bg-amber-400' : 'bg-emerald-400'}`} />
                 {error ? 'Cached feed' : 'Live'}
+              </span>
+              <span title="Ops state persistence" className="flex items-center gap-1">
+                <span className={`inline-block h-2 w-2 rounded-full ${syncError ? 'bg-amber-400' : synced ? 'bg-emerald-400' : 'bg-sky-400 animate-pulse'}`} />
+                {syncError ? 'Ops offline' : synced ? 'Ops stored' : 'Ops syncing…'}
               </span>
               <span>{clock}</span>
               <span className="flex items-center gap-1 rounded bg-white/10 p-1" role="group" aria-label="Acting role">
@@ -176,7 +167,7 @@ export default function App() {
                   </div>
                 </div>
               </div>
-              <ActionQueue towers={towers} assignments={assignments} onAssign={assign} readOnly={readOnly} />
+              <ActionQueue towers={towers} assignments={assignments} onAssign={handleAssign} readOnly={readOnly} />
             </>
           )}
 
@@ -185,7 +176,7 @@ export default function App() {
           )}
 
           {tab === 'fleet' && (
-            <FleetGrid towers={towers} loading={loading} assignments={assignments} onAssign={(id) => assign(id)} readOnly={readOnly} />
+            <FleetGrid towers={towers} loading={loading} assignments={assignments} onAssign={(id) => handleAssign(id)} readOnly={readOnly} />
           )}
 
           {tab === 'subscribers' && <SubscriberCare onResolve={resolve} readOnly={readOnly} />}
