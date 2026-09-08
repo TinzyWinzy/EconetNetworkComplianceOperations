@@ -6,10 +6,18 @@
 // POST /api/ops       -> body: { assignments?: [], audit?: [], resolutions?: number }
 //                        Performs a bulk reconcile so refreshes/offline reconnects converge.
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getDb } from './lib/db';
+import { neon } from '@neondatabase/serverless';
 import type { AuditEntry, CrewAssignment } from '../src/types';
 
 const MAX_AUDIT = 200;
+
+function getDb() {
+  const dbUri = process.env.DATABASE_URL;
+  if (!dbUri) {
+    throw new Error('DATABASE_URL is not configured. Set it in the environment before calling the ops API.');
+  }
+  return neon(dbUri);
+}
 
 function setCors(res: VercelResponse): void {
   res.setHeader('Access-Control-Allow-Origin', '*');
