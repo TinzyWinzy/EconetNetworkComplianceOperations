@@ -1,6 +1,7 @@
 import { FileDown, Printer } from 'lucide-react';
 import { FinancialROIState, TowerTelemetry } from '../types';
 import { exposureOf } from '../lib/exposure';
+import { FinancialBars } from './Charts';
 
 /** Compliance report: exposure, savings, payback — exportable for POTRAZ filings. */
 export default function ComplianceValue({
@@ -21,6 +22,13 @@ export default function ComplianceValue({
   const totalM = roi.mitigatedSavingsUsd + roi.supportDeflectionSavingsUsd + LABOR + sessionExtra;
   const net = totalM * 12 - 15000;
   const paybackD = totalM > 0 ? (15000 / totalM) * 30 : 365;
+
+  const bars = [
+    { label: 'Unmitigated exposure', value: roi.unmitigatedExposuresUsd, note: 'SI 154 outage + tower fines still at risk this pilot month', color: '#ef4444' },
+    { label: 'Shielded by QoS shield', value: roi.mitigatedSavingsUsd, note: 'Outage + tower fines avoided via live shielding (75% efficiency)', color: '#22c55e' },
+    { label: 'Support deflection savings', value: roi.supportDeflectionSavingsUsd + LABOR + sessionExtra, note: 'Call-centre deflection + labour avoided', color: '#3b82f6' },
+    { label: 'Year-1 net value', value: net, note: `Annualised value minus US$15,000 capex · payback ${paybackD.toFixed(0)} days`, color: '#c9a227' }
+  ];
 
   const exportCsv = () => {
     const rows = [
@@ -70,6 +78,10 @@ export default function ComplianceValue({
       <p className="tnum mt-2 text-xs text-blue-200">
         M1 shield {module1 ? 'active (75%)' : 'paused'} · M2 deflection {module2 ? `active · ${resolutions} assisted resolutions (+US$${sessionExtra.toLocaleString()})` : 'paused'} · reporting labour US$2,000/mo · capex US$15,000.
       </p>
+      <div className="mt-4 rounded-xl bg-white/10 p-4">
+        <h3 className="font-bold text-white">Value picture</h3>
+        <FinancialBars items={bars} />
+      </div>
     </section>
   );
 }

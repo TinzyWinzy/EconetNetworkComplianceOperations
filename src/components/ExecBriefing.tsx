@@ -1,6 +1,7 @@
 import { FileDown, ShieldCheck, Megaphone, Scale } from 'lucide-react';
 import { AuditEntry, FinancialROIState, TowerTelemetry } from '../types';
 import { exposureOf } from '../lib/exposure';
+import { Donut, BarList, ChartCard, fleetStatusData, caBands } from './Charts';
 
 /**
  * Fungai Mandiveyi's view: posture at a glance, evidence for POTRAZ,
@@ -89,6 +90,15 @@ export default function ExecBriefing({
           </div>
         </div>
       </section>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <ChartCard title="Fleet status" subtitle="Live split across the 100 pilot sites">
+          <Donut data={fleetStatusData(towers)} />
+        </ChartCard>
+        <ChartCard title="Cell availability bands" subtitle="Under 67% breaches the SI 154 floor">
+          <BarList rows={caBands(towers)} bandColor={(v) => (v > 0 ? '#ef4444' : '#cbd5e1')} />
+        </ChartCard>
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="For the regulator">
