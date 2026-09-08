@@ -1,0 +1,242 @@
+import { useEffect, useMemo, useState } from 'react';
+import NOCDashboard from './components/NOCDashboard';
+import Incidents from './components/Incidents';
+import FleetGrid from './components/FleetGrid';
+import ActionQueue from './components/ActionQueue';
+import ExecBriefing from './components/ExecBriefing';
+import SubscriberCare from './components/SubscriberCare';
+import ComplianceValue from './components/ComplianceValue';
+import ErrorBoundary from './components/ErrorBoundary';
+import { useTowerTelemetry } from './hooks/useTowerTelemetry';
+import { calculateDynamicROI } from './lib/roi';
+import { exposureOf } from './lib/exposure';
+import { AuditEntry, CrewAssignment } from './types';
+
+type Tab = 'overview' | 'briefing' | 'fleet' | 'subscribers' | 'reports';
+type Feed = 'live' | 'grid-event';
+type Role = 'noc' | 'executive';
+
+function useClock(): string {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+export default function App() {
+  const [role, setRole] = useState<Role>('noc');
+  const [tab, setTab] = useState<Tab>('overview');
+  const [feed, setFeed] = useState<Feed>('live');
+  const [module1, setModule1] = useState(true);
+  const [module2, setModule2] = useState(true);
+  const [assignments, setAssignments] = useState<Map<string, CrewAssignment>>(new Map());
+  const [resolutions, setResolutions] = useState(0);
+  const [audit, setAudit] = useState<AuditEntry[]>([]);
+  const clock = useClock();
+
+  const shedding = feed === 'grid-event';
+  const { towers: live, loading, error, lastUpdated, refresh } = useTowerTelemetry(shedding);
+
+  // Assigned battery sites recover (diesel routed); offline sites stay listed until crews close them.
+  const towers = useMemo(
+    () =>
+      live.map((t) =>
+        assignments.has(t.id) && t.status === 'Backup Battery'
+          ? { ...t, status: 'Online' as const, cellAvailabilityPercent: 99.8, dsasrPercent: 97.4, dsdrPercent: 1.1, batteryCapacityPercent: 100 }
+          : t
+      ),
+    [live, assignments]
+  );
+
+  const roi = useMemo(() => calculateDynamicROI(towers, 0, module1, module2), [towers, module1, module2]);
+  const openCases = useMemo(() => towers.filter((t) => exposureOf(t) > 0 && !assignments.has(t.id)).length, [towers, assignments]);
+
+  const log = (actor: string, action: string, detail: string) =>
+    setAudit((a) => [{ time: new Date().toISOString(), actor, action, detail }, ...a].slice(0, 50));
+
+  const assign = (towerId: string, crew = 'Crew A — North') => {
+    if (!module1) return;
+    const entry: CrewAssignment = { towerId, crew, assignedAt: new Date().toISOString(), note: 'Diesel + traffic shift' };
+    setAssignments((prev) => {
+      const next = new Map(prev);
+      next.set(towerId, entry);
+      return next;
+    });
+    const t = live.find((x) => x.id === towerId);
+    log('NOC Operator', 'Crew assigned', `${towerId} ${t ? t.name : ''} → ${crew}`);
+  };
+
+  const resolve = (detail: string) => {
+    setResolutions((r) => r + 1);
+    log('Care Agent', 'Case resolved', detail);
+  };
+
+  const tabs: { id: Tab; label: string }[] =
+    role === 'executive'
+      ? [
+          { id: 'briefing', label: 'Briefing' },
+          { id: 'fleet', label: 'Tower fleet' },
+          { id: 'subscribers', label: 'Subscribers' },
+          { id: 'reports', label: 'Evidence' }
+        ]
+      : [
+          { id: 'overview', label: 'Overview' },
+          { id: 'fleet', label: 'Tower fleet' },
+          { id: 'subscribers', label: 'Subscribers' },
+          { id: 'reports', label: 'Reports' }
+        ];
+  const readOnly = role === 'executive';
+
+  const switchRole = (r: Role) => {
+    setRole(r);
+    setTab(r === 'executive' ? 'briefing' : 'overview');
+  };
+
+  return (
+    <ErrorBoundary>
+      <div className="min-h-screen">
+        <header className="sticky top-0 z-10 bg-[#0e2a47] text-white">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#c9a227] font-bold text-[#0e2a47]">E</div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-[#c9a227]">Econet Wireless · Harare pilot</p>
+                <h1 className="text-base font-bold leading-tight">Network compliance operations</h1>
+              </div>
+            </div>
+            <div className="tnum flex items-center gap-3 text-xs text-blue-200">
+              <span className="flex items-center gap-1">
+                <span className={`inline-block h-2 w-2 rounded-full ${error ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                {error ? 'Cached feed' : 'Live'}
+              </span>
+              <span>{clock}</span>
+              <span className="flex items-center gap-1 rounded bg-white/10 p-1" role="group" aria-label="Acting role">
+                <button onClick={() => switchRole('noc')} className={`rounded px-2 py-0.5 font-semibold ${role === 'noc' ? 'bg-white text-[#0e2a47]' : 'text-blue-200'}`}>
+                  NOC
+                </button>
+                <button onClick={() => switchRole('executive')} className={`rounded px-2 py-0.5 font-semibold ${role === 'executive' ? 'bg-[#c9a227] text-[#0e2a47]' : 'text-blue-200'}`}>
+                  Executive
+                </button>
+              </span>
+            </div>
+          </div>
+          <nav className="mx-auto flex max-w-6xl items-center gap-1 px-4 pb-2" aria-label="Primary">
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                aria-current={tab === t.id ? 'page' : undefined}
+                className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${tab === t.id ? 'bg-white text-[#0e2a47]' : 'text-blue-200 hover:bg-white/10'}`}
+              >
+                {t.label}
+                {t.id === 'overview' && openCases > 0 && (
+                  <span className="tnum ml-1 rounded bg-red-600 px-1.5 text-xs text-white">{openCases}</span>
+                )}
+              </button>
+            ))}
+            <div className="ml-auto flex items-center gap-1 rounded-lg bg-white/10 p-1 text-xs" role="group" aria-label="Network feed">
+              <button onClick={() => setFeed('live')} className={`rounded px-2 py-1 font-semibold ${feed === 'live' ? 'bg-white text-[#0e2a47]' : 'text-blue-200'}`}>
+                Live feed
+              </button>
+              <button onClick={() => setFeed('grid-event')} className={`rounded px-2 py-1 font-semibold ${feed === 'grid-event' ? 'bg-amber-400 text-[#0e2a47]' : 'text-blue-200'}`}>
+                Grid event replay
+              </button>
+            </div>
+          </nav>
+        </header>
+
+        <main className="mx-auto max-w-6xl space-y-4 p-4">
+          {feed === 'grid-event' && (
+            <p className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900" role="status">
+              <span className="font-bold">REPLAY</span> — ZESA 14:00 load-shedding schedule. Crew assignments made here are logged as drill actions.
+              {error && ' Telemetry service unreachable; showing last cached snapshot.'}
+            </p>
+          )}
+
+          {tab === 'overview' && (
+            <>
+              <NOCDashboard towers={towers} openCases={openCases} />
+              <div className="grid gap-4 lg:grid-cols-2">
+                <Incidents towers={towers} />
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
+                  <p className="font-bold text-slate-900">Control layer status</p>
+                  <p className="mt-1 text-slate-600">Read-only sidecar on OCS + NOC feeds. No write path to switches or charging — a failure here cannot drop a call or corrupt billing.</p>
+                  <p className="tnum mt-2 text-xs text-slate-500">
+                    Last sync {lastUpdated ? new Date(lastUpdated).toLocaleTimeString() : '—'}
+                    {loading ? ' · syncing…' : ''} · HMAC-SHA256 PII gateway · TLS 1.3 / AES-256
+                    {!loading && !error && (
+                      <button onClick={refresh} className="ml-2 underline">Refresh now</button>
+                    )}
+                  </p>
+                  <div className="mt-2 flex gap-4 text-xs">
+                    <label className="flex items-center gap-1"><input type="checkbox" checked={module1} onChange={(e) => setModule1(e.target.checked)} /> QoS shield active</label>
+                    <label className="flex items-center gap-1"><input type="checkbox" checked={module2} onChange={(e) => setModule2(e.target.checked)} /> Care deflection active</label>
+                  </div>
+                </div>
+              </div>
+              <ActionQueue towers={towers} assignments={assignments} onAssign={assign} readOnly={readOnly} />
+            </>
+          )}
+
+          {tab === 'briefing' && (
+            <ExecBriefing towers={towers} roi={roi} resolutions={resolutions} audit={audit} lastUpdated={lastUpdated} />
+          )}
+
+          {tab === 'fleet' && (
+            <FleetGrid towers={towers} loading={loading} assignments={assignments} onAssign={(id) => assign(id)} readOnly={readOnly} />
+          )}
+
+          {tab === 'subscribers' && <SubscriberCare onResolve={resolve} readOnly={readOnly} />}
+
+          {tab === 'reports' && (
+            <>
+              <ComplianceValue roi={roi} towers={towers} resolutions={resolutions} module1={module1} module2={module2} />
+              <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="Shift audit log">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="font-bold text-slate-900">Shift audit log · <span className="tnum">{audit.length}</span></h2>
+                  {audit.length > 0 && (
+                    <button
+                      onClick={() => {
+                        const csv = ['time,actor,action,detail', ...audit.map((a) => `${a.time},${a.actor},${a.action},"${a.detail.replace(/"/g, '""')}"`)].join('\n');
+                        const blob = new Blob([csv], { type: 'text/csv' });
+                        const el = document.createElement('a');
+                        el.href = URL.createObjectURL(blob);
+                        el.download = `shift-audit-log-${new Date().toISOString().slice(0, 10)}.csv`;
+                        el.click();
+                        URL.revokeObjectURL(el.href);
+                      }}
+                      className="rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold"
+                    >
+                      Export audit CSV
+                    </button>
+                  )}
+                </div>
+                {audit.length === 0 ? (
+                  <p className="mt-2 text-sm text-slate-500">No actions logged this shift. Crew assignments and care resolutions appear here for POTRAZ filing.</p>
+                ) : (
+                  <ol className="tnum mt-2 divide-y divide-slate-100 text-sm">
+                    {audit.map((a, i) => (
+                      <li key={i} className="py-1.5">
+                        <span className="text-slate-400">{new Date(a.time).toLocaleTimeString()}</span>{' '}
+                        <span className="font-semibold text-slate-800">{a.actor}</span> — {a.action}: {a.detail}
+                      </li>
+                    ))}
+                  </ol>
+                )}
+                <p className="mt-2 text-[11px] text-slate-500">
+                  Basis: SI 154 fines US$5,000 base + US$5,000/hr over 3 hrs, US$200/tower-month; model baseline 10,000 calls/mo, 15% billing-related, 30% deflection, 75% shielding — validate against Econet NOC and call-centre records before filing.
+                </p>
+              </section>
+            </>
+          )}
+        </main>
+
+        <footer className="tnum mx-auto max-w-6xl px-4 pb-8 text-[11px] text-slate-500">
+          RadBit compliance sidecar · pilot v1.0 · {lastUpdated ? `synced ${new Date(lastUpdated).toLocaleString()}` : 'awaiting first sync'}
+        </footer>
+      </div>
+    </ErrorBoundary>
+  );
+}

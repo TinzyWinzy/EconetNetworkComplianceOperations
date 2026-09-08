@@ -1,0 +1,10 @@
+# deps + build
+node_modules/
+dist/
+# secrets (never commit real salts)
+.env
+.env.local
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
