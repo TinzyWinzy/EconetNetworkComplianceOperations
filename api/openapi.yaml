@@ -25,7 +25,7 @@ info:
     identifier: LicenseRef-Proprietary
 
 servers:
-  - url: https://econet-network-compliance-operations.vercel.app
+  - url: https://econetnetworkcomplianceops.vercel.app
     description: Production (Vercel serverless)
   - url: http://localhost:5174
     description: Local development (Vite mock middleware)

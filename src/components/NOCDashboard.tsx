@@ -1,5 +1,6 @@
-import { TowerTelemetry } from '../types';
+import { TowerTelemetry, SI_LIMITS } from '../types';
 import { Donut, BarList, ChartCard, fleetStatusData, caBands } from './Charts';
+import { riskLevel } from '../lib/exposure';
 
 function avg(ts: TowerTelemetry[], f: (t: TowerTelemetry) => number): string {
   if (ts.length === 0) return '—';
@@ -9,16 +10,17 @@ function avg(ts: TowerTelemetry[], f: (t: TowerTelemetry) => number): string {
 /** Fleet status at a glance: banner first, KPIs second, visualisations third. */
 export default function NOCDashboard({ towers, openCases }: { towers: TowerTelemetry[]; openCases: number }) {
   const breaches = towers.filter(
-    (t) => t.cellAvailabilityPercent < 67 || t.dsasrPercent < 95 || t.dsdrPercent > 2
+    (t) => t.cellAvailabilityPercent < SI_LIMITS.cellAvailability || t.dsasrPercent < SI_LIMITS.dsasr || t.dsdrPercent > SI_LIMITS.dsdr
   ).length;
+  const warnings = towers.filter((t) => riskLevel(t) === 'HIGH' || riskLevel(t) === 'MEDIUM').length;
   const offline = towers.filter((t) => t.status === 'Offline').length;
-  const ok = breaches === 0;
+  const ok = breaches === 0 && warnings === 0;
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" aria-label="Network status">
       <div className={`px-4 py-2 text-sm font-semibold ${ok ? 'bg-emerald-800 text-white' : 'bg-red-800 text-white'}`}>
         {ok
           ? 'All 100 sites inside SI 154 limits'
-          : `${breaches} sites breach SI 154 · ${offline} offline · ${openCases} open ${openCases === 1 ? 'case' : 'cases'}`}
+          : `${breaches} breach · ${warnings} early-warning · ${offline} offline · ${openCases} open ${openCases === 1 ? 'case' : 'cases'}`}
       </div>
       <div className="tnum grid grid-cols-3 divide-x divide-slate-100 text-center">
         <div className="p-3">

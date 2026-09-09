@@ -61,16 +61,9 @@ export default function App() {
   const shedding = feed === 'grid-event';
   const { towers: live, loading, error, lastUpdated, refresh } = useTowerTelemetry(shedding);
 
-  // Assigned battery sites recover (diesel routed); offline sites stay listed until crews close them.
-  const towers = useMemo(
-    () =>
-      live.map((t) =>
-        assignments.has(t.id) && t.status === 'Backup Battery'
-          ? { ...t, status: 'Online' as const, cellAvailabilityPercent: 99.8, dsasrPercent: 97.4, dsdrPercent: 1.1, batteryCapacityPercent: 100 }
-          : t
-      ),
-    [live, assignments]
-  );
+  // Crew assignment marks dispatch only — live status stays until NOC confirms
+  // restoration via real telemetry. Assigned sites show blue outline in fleet view.
+  const towers = useMemo(() => live, [live]);
 
   const roi = useMemo(() => calculateDynamicROI(towers, 0, module1, module2), [towers, module1, module2]);
   const openCases = useMemo(() => towers.filter((t) => exposureOf(t) > 0 && !assignments.has(t.id)).length, [towers, assignments]);

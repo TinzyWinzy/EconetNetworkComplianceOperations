@@ -78,6 +78,9 @@ export default function ComplianceValue({
       <p className="tnum mt-2 text-xs text-blue-200">
         M1 shield {module1 ? 'active (75%)' : 'paused'} · M2 deflection {module2 ? `active · ${resolutions} assisted resolutions (+US$${sessionExtra.toLocaleString()})` : 'paused'} · reporting labour US$2,000/mo · capex US$15,000.
       </p>
+      <p className="tnum mt-1 text-[11px] text-blue-200/80">
+        Synthetic pilot model — validate 75% shielding, 30% deflection, 10k calls/mo baseline against Econet NOC/call-centre records before filing.
+      </p>
       <div className="mt-4 rounded-xl bg-white/10 p-4">
         <h3 className="font-bold text-white">Value picture</h3>
         <FinancialBars items={bars} />

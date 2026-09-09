@@ -1,13 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Search, RefreshCw } from 'lucide-react';
-import { TowerTelemetry, CrewAssignment } from '../types';
+import { TowerTelemetry, CrewAssignment, SI_LIMITS } from '../types';
 
 function regionOf(t: TowerTelemetry): string {
   return t.name.split(' Base-Station')[0];
 }
 
 const dot = (t: TowerTelemetry) =>
-  t.cellAvailabilityPercent < 67 || t.status === 'Offline'
+  t.cellAvailabilityPercent < SI_LIMITS.cellAvailability || t.status === 'Offline'
     ? 'bg-red-600'
     : t.status === 'Backup Battery'
       ? 'bg-amber-400'
@@ -38,7 +38,7 @@ export default function FleetGrid({
     return towers.filter((t) => {
       if (filter === 'Offline' && t.status !== 'Offline') return false;
       if (filter === 'Backup Battery' && t.status !== 'Backup Battery') return false;
-      if (filter === 'KPI breach' && !(t.cellAvailabilityPercent < 67 || t.dsasrPercent < 95 || t.dsdrPercent > 2)) return false;
+      if (filter === 'KPI breach' && !(t.cellAvailabilityPercent < SI_LIMITS.cellAvailability || t.dsasrPercent < SI_LIMITS.dsasr || t.dsdrPercent > SI_LIMITS.dsdr)) return false;
       if (q && !`${t.id} ${t.name} ${t.status}`.toLowerCase().includes(q)) return false;
       return true;
     });

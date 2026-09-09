@@ -43,6 +43,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     res.status(400).json({ error: 'Missing message body.' });
     return;
   }
+  if (body.thresholdPct !== undefined && (!Number.isFinite(thresholdPct) || thresholdPct < 0 || thresholdPct > 100)) {
+    res.status(400).json({ error: 'Invalid thresholdPct. Expected 0-100.' });
+    return;
+  }
+  // SIMULATOR ONLY — no real SMPP/SMS gateway called. Production must replace
+  // simulateLatencyMs() with Econet SMSC/USSD provider + retry queue + DLR tracking.
 
   const latencyMs = simulateLatencyMs();
   res.status(200).json({

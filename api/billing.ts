@@ -52,6 +52,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   }
   const hashedParam = first(req.query.hashedMsisdn ?? req.query.hashed_msisdn);
   const rawParam = first(req.query.msisdn);
+  // STRICT_ZERO_PII=true rejects raw MSISDN in pilot/prod — caller must pre-hash in HSM.
+  if (process.env.STRICT_ZERO_PII === 'true' && rawParam) {
+    res.status(400).json({ error: 'Raw msisdn rejected (STRICT_ZERO_PII). Submit hashedMsisdn HMAC-SHA256 hex.' });
+    return;
+  }
   let hashedMsisdn: string;
   if (hashedParam && /^[a-f0-9]{64}$/i.test(hashedParam)) {
     hashedMsisdn = hashedParam.toLowerCase();

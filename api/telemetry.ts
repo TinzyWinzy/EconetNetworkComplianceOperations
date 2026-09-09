@@ -1,10 +1,76 @@
 // GET /api/telemetry — spec-aligned deterministic mock + production hardening.
 // Returns TowerTelemetry[] (spec §3.1). Legacy {towers} wrapper available via ?shape=wrapped.
 // Read-only, Zero-PII, no Econet core writes.
+// Self-contained (no ../src import) so Vercel serverless bundling never fails.
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { buildTelemetry } from '../src/lib/towers';
 
-export { buildTelemetry };
+interface TowerRow {
+  id: string;
+  name: string;
+  region: string;
+  latitude: number;
+  longitude: number;
+  status: 'Online' | 'Backup Battery' | 'Offline';
+  batteryCapacityPercent: number;
+  cellAvailabilityPercent: number;
+  dsasrPercent: number;
+  dsdrPercent: number;
+  droppedCallRatePercent: number;
+  activeOutageDurationMinutes: number;
+}
+
+const NAMES = ['Harare CBD', 'Avondale', 'Borrowdale', 'Gweru', 'Bulawayo', 'Mutare', 'Chitungwiza', 'Ruwa'];
+const BASE_LAT = -17.825;
+const BASE_LNG = 31.033;
+
+function jitter(seed: number, prime: number, span: number): number {
+  return (((seed * prime) % 1000) / 1000 - 0.5) * span;
+}
+
+export function buildTelemetry(loadShedding: boolean, count = 100): TowerRow[] {
+  return Array.from({ length: count }, (_, i) => {
+    const id = `T${String(i + 1).padStart(3, '0')}`;
+    const name = `${NAMES[i % NAMES.length]} Base-Station ${i + 1}`;
+    const seed = i + 1;
+    const latitude = BASE_LAT + jitter(seed, 7919, 0.6);
+    const longitude = BASE_LNG + jitter(seed, 104729, 0.6);
+    let status: TowerRow['status'] = 'Online';
+    let batteryCapacityPercent = 100;
+    let cellAvailabilityPercent = 99.8;
+    let dsasrPercent = 97.4;
+    let dsdrPercent = 1.1;
+    let droppedCallRatePercent = 0.8;
+    let activeOutageDurationMinutes = 0;
+    if (loadShedding && i % 7 === 0) {
+      status = 'Backup Battery';
+      batteryCapacityPercent = Math.max(12, 100 - i * 3);
+      cellAvailabilityPercent = 78.5;
+      if (batteryCapacityPercent < 15) {
+        status = 'Offline';
+        batteryCapacityPercent = 0;
+        cellAvailabilityPercent = 54.2;
+        dsasrPercent = 0.0;
+        dsdrPercent = 100.0;
+        droppedCallRatePercent = 100.0;
+        activeOutageDurationMinutes = 185 + i * 2;
+      }
+    }
+    return {
+      id,
+      name,
+      region: NAMES[i % NAMES.length],
+      latitude,
+      longitude,
+      status,
+      batteryCapacityPercent,
+      cellAvailabilityPercent,
+      dsasrPercent,
+      dsdrPercent,
+      droppedCallRatePercent,
+      activeOutageDurationMinutes
+    };
+  });
+}
 
 function setCors(res: VercelResponse): void {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -20,6 +86,13 @@ export default function handler(req: VercelRequest, res: VercelResponse): void {
     res.status(204).end();
     return;
   }
+  if (process.env.REQUIRE_JWT === 'true') {
+    const auth = req.headers.authorization || '';
+    if (!auth.startsWith('Bearer ') || auth.length < 20) {
+      res.status(401).json({ error: 'Missing or invalid Bearer JWT.' });
+      return;
+    }
+  }
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed. Use GET /api/telemetry.' });
     return;
@@ -31,7 +104,6 @@ export default function handler(req: VercelRequest, res: VercelResponse): void {
     return;
   }
   const towers = buildTelemetry(loadShedding);
-  // Default: spec-compliant bare array. ?shape=wrapped keeps legacy {towers} clients working.
   if (req.query.shape === 'wrapped') {
     res.status(200).json({
       generatedAt: new Date().toISOString(),

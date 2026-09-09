@@ -32,7 +32,7 @@ export function useSubscriberBilling(msisdn: string, dataUsedGb: number) {
         setProfile(canon);
       } catch (err) {
         setError(err as Error);
-        // Local fallback keeps slider demo usable offline.
+        // Local fallback keeps slider demo usable offline. Thresholds mirror API: 50/80/90/100.
         const fupLimitGb = 100;
         const pct = Math.round((Math.min(dataUsedGb, 110) / fupLimitGb) * 100);
         setProfile({
@@ -42,7 +42,7 @@ export function useSubscriberBilling(msisdn: string, dataUsedGb: number) {
           fupLimitGb,
           fupRatioPercent: pct,
           currentSpeedKbps: pct >= 100 ? 128 : 20000,
-          notifiedThresholds: [50, 80, 100].filter((t) => pct >= t)
+          notifiedThresholds: [50, 80, 90, 100].filter((t) => pct >= t)
         });
       } finally {
         setLoading(false);
