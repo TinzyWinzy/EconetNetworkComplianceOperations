@@ -135,11 +135,11 @@ export default function App() {
               >
                 <Compass size={14} /> Demo guide
               </button>
-              <span className="flex items-center gap-1 rounded bg-white/10 p-1" role="group" aria-label="Acting role">
-                <button onClick={() => switchRole('noc')} className={`rounded px-2 py-0.5 font-semibold ${role === 'noc' ? 'bg-white text-[#2d358b]' : 'text-blue-200'}`}>
+              <span className="flex items-center gap-1 rounded bg-white/10 p-1" role="group" aria-label="Acting role: NOC operational or Executive briefing">
+                <button onClick={() => switchRole('noc')} className={`min-h-[36px] rounded px-3 py-1.5 font-semibold ${role === 'noc' ? 'bg-white text-[#2d358b]' : 'text-blue-200'}`}>
                   NOC
                 </button>
-                <button onClick={() => switchRole('executive')} className={`rounded px-2 py-0.5 font-semibold ${role === 'executive' ? 'bg-[#c80f22] text-white' : 'text-blue-200'}`}>
+                <button onClick={() => switchRole('executive')} className={`min-h-[36px] rounded px-3 py-1.5 font-semibold ${role === 'executive' ? 'bg-[#c80f22] text-white' : 'text-blue-200'}`}>
                   Executive
                 </button>
               </span>

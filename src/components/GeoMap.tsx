@@ -108,10 +108,11 @@ export default function GeoMap({ towers }: { towers: TowerTelemetry[] }) {
         </div>
       </div>
       <div className="relative mt-2 overflow-hidden rounded-xl border border-slate-200">
-        <div ref={containerRef} className="h-[520px] w-full" />
+        <div ref={containerRef} className="h-[360px] w-full sm:h-[520px]" />
       </div>
       <p className="tnum mt-2 text-xs text-slate-500">
         {towers.length} Harare pilot sites · synthetic coordinates for demo · pan/zoom, click a marker for its SI 154 status.
+        Map tiles need internet — if tiles fail, use Grid/Table (same data, zero tile cost).
         Keyboard and screen-reader users: switch to the Grid view for a fully accessible site list.
       </p>
     </section>

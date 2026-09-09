@@ -42,8 +42,7 @@ export default function FleetTable({
 
   const columns = useMemo(
     () => [
-      col.accessor('id', { header: 'ID', cell: (i) => <span className="tnum font-semibold text-slate-700">{i.getValue()}</span> }),
-      col.accessor('name', { header: 'Site', cell: (i) => <span className="truncate">{i.getValue()}</span> }),
+      col.accessor('id', { header: 'ID', cell: (i) => <span className="tnum font-semibold text-slate-700">{i.getValue()}</span>, meta: { sticky: true } }),      col.accessor('name', { header: 'Site', cell: (i) => <span className="truncate">{i.getValue()}</span> }),
       col.accessor('region', { header: 'Region' }),
       col.accessor('status', { header: 'Status', cell: (i) => statusBadge(i.row.original), enableSorting: false }),
       col.accessor('cellAvailabilityPercent', { header: 'CA%', cell: (i) => <span className="tnum">{i.getValue().toFixed(1)}</span> }),
@@ -142,7 +141,7 @@ export default function FleetTable({
             {table.getRowModel().rows.map((row) => (
               <tr key={row.id} className="border-b border-slate-100 hover:bg-slate-50">
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-2 py-2 text-slate-700">
+                  <td key={cell.id} className={`px-2 py-2 text-slate-700 ${cell.column.id === 'id' ? 'sticky left-0 bg-white shadow-[1px_0_0_#e2e8f0]' : ''}`}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}

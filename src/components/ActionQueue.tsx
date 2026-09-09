@@ -49,6 +49,7 @@ export default function ActionQueue({
                   <p className="tnum text-xs text-slate-500">
                     CA {t.cellAvailabilityPercent}% · DSASR {t.dsasrPercent}% · DSDR {t.dsdrPercent}%
                     {t.activeOutageDurationMinutes > 0 && ` · outage ${t.activeOutageDurationMinutes}m`}
+                    <span className="ml-1 font-semibold text-blue-800">· Crew ETA ~45m after assign</span>
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
@@ -62,7 +63,7 @@ export default function ActionQueue({
                   <select
                     value={crewPick[t.id] ?? CREWS[idx % CREWS.length]}
                     onChange={(e) => setCrewPick((p) => ({ ...p, [t.id]: e.target.value }))}
-                    className="rounded border border-slate-300 px-1 py-1 text-xs"
+                    className="min-h-[44px] rounded border border-slate-300 px-2 py-2 text-xs"
                     aria-label={`Crew for ${t.id}`}
                   >
                     {CREWS.map((c) => (
@@ -71,7 +72,7 @@ export default function ActionQueue({
                   </select>
                   <button
                     onClick={() => onAssign(t.id, crewPick[t.id] ?? CREWS[idx % CREWS.length])}
-                    className="rounded-lg bg-slate-900 px-2 py-1 text-xs font-semibold text-white"
+                    className="min-h-[44px] rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white"
                   >
                     Assign
                   </button>

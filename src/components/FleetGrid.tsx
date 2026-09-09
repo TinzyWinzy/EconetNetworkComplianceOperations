@@ -128,11 +128,11 @@ function SiteDetail({ tower: t, assigned, onAssign, readOnly }: { tower: TowerTe
       <span className="font-bold text-slate-900">{t.id} {t.name}</span> · {t.status} · CA {t.cellAvailabilityPercent}% · DSASR {t.dsasrPercent}% · DSDR {t.dsdrPercent}%
       {t.activeOutageDurationMinutes > 0 && ` · outage ${t.activeOutageDurationMinutes}m`}
       {assigned ? (
-        <span className="ml-2 font-semibold text-blue-800">Crew {assigned.crew} · {new Date(assigned.assignedAt).toLocaleTimeString()}</span>
+        <span className="ml-2 font-semibold text-blue-800">Crew {assigned.crew} · {new Date(assigned.assignedAt).toLocaleTimeString()} · ETA ~45m</span>
       ) : readOnly ? (
         <span className="ml-2 text-slate-400">Unassigned — NOC action pending</span>
       ) : (
-        <button onClick={() => onAssign(t.id)} className="ml-2 rounded border border-slate-300 bg-white px-2 py-0.5 font-semibold hover:bg-slate-100">
+        <button onClick={() => onAssign(t.id)} className="ml-2 min-h-[44px] rounded border border-slate-300 bg-white px-3 py-2 font-semibold hover:bg-slate-100">
           Assign crew
         </button>
       )}
