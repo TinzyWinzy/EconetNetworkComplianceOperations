@@ -44,10 +44,11 @@ export default function SubscriberCare({ onResolve, readOnly = false }: { onReso
             value={key}
             onChange={(e) => setKey(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && lookup()}
-            placeholder="MSISDN or hashed ID"
+            placeholder="MSISDN or 64-hex hashed ID"
             className="w-full rounded-lg border border-slate-300 py-1.5 pl-7 pr-2 text-sm"
             aria-label="Subscriber key"
-            inputMode="numeric"
+            inputMode="text"
+            autoComplete="off"
           />
         </label>
         <button onClick={lookup} disabled={loading || !key.trim()} className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40">

@@ -39,8 +39,14 @@ function useClock(): string {
 }
 
 export default function App() {
-  const [role, setRole] = useState<Role>('noc');
-  const [tab, setTab] = useState<Tab>('overview');
+  const [role, setRole] = useState<Role>(() => {
+    const q = new URLSearchParams(window.location.search);
+    return q.get('to') === 'fungai' || q.get('role') === 'executive' ? 'executive' : 'noc';
+  });
+  const [tab, setTab] = useState<Tab>(() => {
+    const q = new URLSearchParams(window.location.search);
+    return q.get('to') === 'fungai' || q.get('role') === 'executive' ? 'briefing' : 'overview';
+  });
   const [feed, setFeed] = useState<Feed>('live');
   const [module1, setModule1] = useState(true);
   const [module2, setModule2] = useState(true);
