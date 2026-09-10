@@ -24,6 +24,33 @@ const RED = rgb(0.72, 0.15, 0.15);
 const AMBER = rgb(0.72, 0.5, 0.05);
 const LINE = rgb(0.85, 0.88, 0.9);
 
+/**
+ * Strip / replace any character that falls outside WinAnsi (Windows-1252).
+ * pdf-lib's StandardFonts are WinAnsi-encoded — anything above 0xFF throws.
+ * We map common Unicode glyphs to readable ASCII equivalents first, then drop
+ * anything still outside the safe range.
+ */
+function sanitise(text: string): string {
+  return text
+    // arrows
+    .replace(/\u2192/g, '->')   // → (the one that triggered the bug)
+    .replace(/\u2190/g, '<-')   // ←
+    .replace(/\u2194/g, '<->') // ↔
+    .replace(/\u21d2/g, '=>')  // ⇒
+    // dashes & spaces
+    .replace(/\u2014/g, '--')   // em dash —
+    .replace(/\u2013/g, '-')    // en dash –
+    .replace(/\u00b7/g, '.')    // middle dot ·
+    .replace(/\u2022/g, '*')    // bullet •
+    // quotes
+    .replace(/[\u2018\u2019]/g, "'")  // curly single quotes
+    .replace(/[\u201c\u201d]/g, '"')  // curly double quotes
+    // ellipsis
+    .replace(/\u2026/g, '...')  // …
+    // drop anything still outside Latin-1 / WinAnsi
+    .replace(/[^\x00-\xFF]/g, '?');
+}
+
 function usd(n: number): string {
   return `US$${Math.round(n).toLocaleString('en-US')}`;
 }
@@ -206,16 +233,16 @@ export async function buildDossierPdf(input: DossierInput): Promise<Uint8Array> 
       sy = n.y;
     }
     const cells: Record<string, string> = {
-      id: t.id,
-      name: t.name.length > 34 ? t.name.slice(0, 33) + '…' : t.name,
-      region: t.region,
-      status: t.status,
+      id: sanitise(t.id),
+      name: sanitise(t.name.length > 34 ? t.name.slice(0, 33) + '...' : t.name),
+      region: sanitise(t.region),
+      status: sanitise(t.status),
       ca: pct(t.cellAvailabilityPercent),
       dsasr: pct(t.dsasrPercent),
       dsdr: pct(t.dsdrPercent),
       dcr: pct(t.droppedCallRatePercent),
-      outage: t.activeOutageDurationMinutes > 0 ? String(t.activeOutageDurationMinutes) : '—',
-      exposure: exposureOf(t) > 0 ? usd(exposureOf(t)) : '—'
+      outage: t.activeOutageDurationMinutes > 0 ? String(t.activeOutageDurationMinutes) : '-',
+      exposure: exposureOf(t) > 0 ? usd(exposureOf(t)) : '-'
     };
     let cx = schedX;
     const col = statusColor(t);
@@ -258,7 +285,7 @@ export async function buildDossierPdf(input: DossierInput): Promise<Uint8Array> 
   } else {
     for (const a of input.audit.slice(0, 20)) {
       const when = new Date(a.time).toLocaleString();
-      const line = `${when}  ·  ${a.actor}  —  ${a.action}: ${a.detail}`;
+      const line = sanitise(`${when}  |  ${a.actor}  -  ${a.action}: ${a.detail}`);
       for (const l of wrapWithMeasure(line, 8, (s) => font.widthOfTextAtSize(s, 8), contentW)) {
         if (y < bottom) break;
         page.drawText(l, { x: margin, y, size: 8, font, color: INK });
