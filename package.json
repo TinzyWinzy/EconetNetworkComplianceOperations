@@ -10,6 +10,7 @@
     "migrate": "node db/migrate.mjs",
     "seed:subscribers": "node db/seed-subscribers.mjs",
     "verify:db": "node db/verify.mjs",
+    "reset:db": "node db/reset.mjs",
     "e2e": "node e2e/smoke.mjs"
   },
   "dependencies": {
