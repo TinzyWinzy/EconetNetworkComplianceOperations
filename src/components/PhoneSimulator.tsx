@@ -106,7 +106,7 @@ export default function PhoneSimulator({ onDeflect }: { onDeflect: (detail: stri
           </div>
         </div>
 
-        <div className="mx-auto mt-3 w-[290px] rounded-[2rem] border-8 border-slate-900 bg-slate-50 p-3 shadow-xl">
+        <div className="mx-auto mt-3 w-full max-w-[290px] rounded-[2rem] border-8 border-slate-900 bg-slate-50 p-3 shadow-xl">
           <div className="flex items-center justify-between text-[10px] font-semibold text-slate-500">
             <span>Econet 4G</span>
             <span className="font-bold text-slate-800">My-Data</span>

@@ -41,8 +41,8 @@ export function Donut({
   });
 
   return (
-    <div className="flex items-center gap-4">
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-label="Fleet status share" role="img">
+    <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-4">
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-label="Fleet status share" role="img" className="shrink-0">
         {total === 0 ? (
           <circle cx={cx} cy={cy} r={r} fill="none" stroke="#e2e8f0" strokeWidth={thickness} />
         ) : (
@@ -66,10 +66,10 @@ export function Donut({
           sites
         </text>
       </svg>
-      <ul className="space-y-1 text-sm">
+      <ul className="w-full sm:w-auto space-y-1.5 text-xs sm:text-sm">
         {segments.map((s, i) => (
           <li key={i} className="flex items-center gap-2">
-            <span className="inline-block h-3 w-3 rounded-sm" style={{ background: s.color }} />
+            <span className="inline-block h-3 w-3 shrink-0 rounded-sm" style={{ background: s.color }} />
             <span className="text-slate-700">{s.label}</span>
             <span className="tnum ml-auto font-semibold text-slate-900">{s.value}</span>
           </li>
@@ -93,11 +93,11 @@ export function BarList({
   return (
     <div className="space-y-2" role="img" aria-label="Distribution by band">
       {rows.map((r, i) => (
-        <div key={i} className="flex items-center gap-2 text-sm">
-          <span className="w-28 shrink-0 text-slate-600">{r.label}</span>
+        <div key={i} className="flex items-center gap-2 text-xs sm:text-sm">
+          <span className="w-20 sm:w-28 shrink-0 text-slate-600 truncate">{r.label}</span>
           <div className="h-5 flex-1 overflow-hidden rounded bg-slate-100">
             <div
-              className="tnum flex h-full items-center justify-end rounded px-1.5 text-[11px] font-semibold text-white"
+              className="tnum flex h-full items-center justify-end rounded px-1.5 text-[10px] sm:text-[11px] font-semibold text-white"
               style={{
                 width: `${(r.value / max) * 100}%`,
                 minWidth: r.value > 0 ? '1.5rem' : undefined,

@@ -51,7 +51,7 @@ export default function SubscriberCare({ onResolve, readOnly = false }: { onReso
             autoComplete="off"
           />
         </label>
-        <button onClick={lookup} disabled={loading || !key.trim()} className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40">
+        <button onClick={lookup} disabled={loading || !key.trim()} className="rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40 shrink-0">
           {loading ? 'Loading…' : 'Look up'}
         </button>
       </div>
@@ -79,25 +79,25 @@ export default function SubscriberCare({ onResolve, readOnly = false }: { onReso
               const hit = profile.notifiedThresholds.includes(t);
               return (
                 <li key={t} className="flex items-center gap-2 text-sm">
-                  {hit ? <CheckCircle2 size={14} className="text-emerald-700" /> : <span className="inline-block h-3.5 w-3.5 rounded-full border border-slate-300" />}
+                  {hit ? <CheckCircle2 size={14} className="text-emerald-700 shrink-0" /> : <span className="inline-block h-3.5 w-3.5 rounded-full border border-slate-300 shrink-0" />}
                   <span className={hit ? 'text-slate-800' : 'text-slate-400'}>{t}% alert {hit ? 'sent' : 'pending'}</span>
                 </li>
               );
             })}
           </ol>
           <p className="tnum mt-2 break-all text-[11px] text-slate-400">id {profile.hashedMsisdn.slice(0, 16)}… · zero raw PII stored</p>
-          <div className="mt-2 flex gap-2">
+          <div className="mt-3 flex flex-wrap gap-2">
             {readOnly ? (
               <p className="text-xs text-slate-400">Oversight view — care actions are taken by the care team.</p>
             ) : (
               <>
             <button
               onClick={() => { setSent(true); onResolve(`Top-up offer sent to …${profile.hashedMsisdn.slice(-6)} at ${profile.fupRatioPercent}% FUP`); }}
-              className="flex items-center gap-1 rounded-lg bg-emerald-800 px-3 py-1.5 text-sm font-semibold text-white"
+              className="flex items-center gap-1 rounded-lg bg-emerald-800 px-3 py-1.5 text-xs sm:text-sm font-semibold text-white hover:bg-emerald-700"
             >
               <Send size={14} /> {sent ? 'Offer sent' : 'Send top-up offer'}
             </button>
-            <button onClick={() => onResolve(`Care case resolved for …${profile.hashedMsisdn.slice(-6)} without a call-centre ticket`)} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold">
+            <button onClick={() => onResolve(`Care case resolved for …${profile.hashedMsisdn.slice(-6)} without a call-centre ticket`)} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs sm:text-sm font-semibold hover:bg-slate-50">
               Log resolution
             </button>
               </>

@@ -108,67 +108,94 @@ export default function App() {
     <ErrorBoundary>
       <a href="#main-content" className="skip-link">Skip to main content</a>
       <div className="min-h-screen">
-        <header className="sticky top-0 z-10 bg-gradient-to-r from-[#2D3187] via-[#2d358b] to-[#1e40af] text-white">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-3">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#e9222f] font-bold text-white" aria-hidden="true">E</div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-[#ffb3b8]">Econet Wireless · Harare pilot</p>
-                <h1 className="text-base font-bold leading-tight">Network compliance operations</h1>
+        <header className="sticky top-0 z-20 bg-gradient-to-r from-[#2D3187] via-[#2d358b] to-[#1e40af] text-white shadow-md">
+          {/* Top Row: Brand & Status & Role switcher */}
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2.5 px-3 py-2.5 sm:px-4 sm:py-3">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg bg-[#e9222f] font-bold text-white shadow-sm" aria-hidden="true">E</div>
+              <div className="min-w-0">
+                <p className="truncate text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest text-[#ffb3b8]">Econet Wireless · Harare pilot</p>
+                <h1 className="truncate text-sm sm:text-base font-bold leading-tight">Network compliance operations</h1>
               </div>
             </div>
             <span className="sr-only" role="status">{openCases > 0 ? `${openCases} open compliance ${openCases === 1 ? 'case' : 'cases'}` : 'No open compliance cases'}</span>
-            <div className="tnum flex items-center gap-3 text-xs text-blue-200">
-              <span className="flex items-center gap-1">
-                <span className={`inline-block h-2 w-2 rounded-full ${error ? 'bg-amber-400' : 'bg-emerald-400'}`} />
-                {error ? 'Cached feed' : 'Live'}
-              </span>
-              <span title="Ops state persistence" className="flex items-center gap-1">
-                <span className={`inline-block h-2 w-2 rounded-full ${syncError ? 'bg-amber-400' : synced ? 'bg-emerald-400' : 'bg-sky-400 animate-pulse'}`} />
-                {syncError ? 'Ops offline' : synced ? 'Ops stored' : 'Ops syncing…'}
-              </span>
-              <span>{clock}</span>
+            
+            <div className="tnum flex flex-wrap items-center gap-2 sm:gap-3 text-xs text-blue-200">
+              <div className="flex items-center gap-1.5 sm:gap-2 rounded-md bg-white/10 px-2 py-1 text-[11px] sm:text-xs">
+                <span className="flex items-center gap-1" title={error ? 'Cached telemetry feed' : 'Live telemetry feed'}>
+                  <span className={`inline-block h-2 w-2 rounded-full ${error ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                  <span>{error ? 'Cached' : 'Live'}</span>
+                </span>
+                <span className="text-white/30" aria-hidden="true">·</span>
+                <span title="Ops state persistence" className="flex items-center gap-1">
+                  <span className={`inline-block h-2 w-2 rounded-full ${syncError ? 'bg-amber-400' : synced ? 'bg-emerald-400' : 'bg-sky-400 animate-pulse'}`} />
+                  <span>{syncError ? 'Offline' : synced ? 'Stored' : 'Syncing…'}</span>
+                </span>
+                <span className="text-white/30 hidden sm:inline" aria-hidden="true">·</span>
+                <span className="hidden sm:inline">{clock}</span>
+              </div>
+
               <button
                 onClick={() => setGuideOpen(true)}
                 aria-haspopup="dialog"
-                className="flex items-center gap-1 rounded bg-white/10 px-2 py-1 text-xs font-semibold text-white hover:bg-white/20"
+                className="flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 text-xs font-semibold text-white hover:bg-white/20 active:scale-95 transition-all"
               >
-                <Compass size={14} /> Demo guide
+                <Compass size={14} /> <span className="hidden sm:inline">Demo guide</span><span className="sm:hidden">Guide</span>
               </button>
-              <span className="flex items-center gap-1 rounded bg-white/10 p-1" role="group" aria-label="Acting role: NOC operational or Executive briefing">
-                <button onClick={() => switchRole('noc')} className={`min-h-[36px] rounded px-3 py-1.5 font-semibold ${role === 'noc' ? 'bg-white text-[#2d358b]' : 'text-blue-200'}`}>
+
+              <span className="flex items-center gap-0.5 rounded-lg bg-white/10 p-0.5" role="group" aria-label="Acting role: NOC operational or Executive briefing">
+                <button
+                  onClick={() => switchRole('noc')}
+                  className={`min-h-[30px] sm:min-h-[32px] rounded px-2.5 py-1 text-xs font-semibold transition-all ${role === 'noc' ? 'bg-white text-[#2d358b] shadow-sm' : 'text-blue-200 hover:text-white'}`}
+                >
                   NOC
                 </button>
-                <button onClick={() => switchRole('executive')} className={`min-h-[36px] rounded px-3 py-1.5 font-semibold ${role === 'executive' ? 'bg-[#c80f22] text-white' : 'text-blue-200'}`}>
+                <button
+                  onClick={() => switchRole('executive')}
+                  className={`min-h-[30px] sm:min-h-[32px] rounded px-2.5 py-1 text-xs font-semibold transition-all ${role === 'executive' ? 'bg-[#c80f22] text-white shadow-sm' : 'text-blue-200 hover:text-white'}`}
+                >
                   Executive
                 </button>
               </span>
             </div>
           </div>
-          <nav className="mx-auto flex max-w-6xl items-center gap-1 px-4 pb-2" aria-label="Primary">
-            {tabs.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                aria-current={tab === t.id ? 'page' : undefined}
-                className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${tab === t.id ? 'bg-white text-[#2d358b]' : 'text-blue-200 hover:bg-white/10'}`}
-              >
-                {t.label}
-                {t.id === 'overview' && openCases > 0 && (
-                  <span className="tnum ml-1 rounded bg-red-600 px-1.5 text-xs text-white">{openCases}</span>
-                )}
-              </button>
-            ))}
-            <div className="ml-auto flex items-center gap-1 rounded-lg bg-white/10 p-1 text-xs" role="group" aria-label="Network feed">
-              <button onClick={() => setFeed('live')} className={`rounded px-2 py-1 font-semibold ${feed === 'live' ? 'bg-white text-[#2d358b]' : 'text-blue-200'}`}>
-                Live feed
-              </button>
-              <button onClick={() => setFeed('grid-event')} className={`rounded px-2 py-1 font-semibold ${feed === 'grid-event' ? 'bg-amber-400 text-[#2d358b]' : 'text-blue-200'}`}>
-                Grid event replay
-              </button>
+
+          {/* Navigation Tabs & Feed Switcher Row */}
+          <div className="border-t border-white/10 bg-black/10">
+            <div className="mx-auto flex max-w-6xl flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 px-3 py-1.5 sm:px-4">
+              <nav className="flex items-center gap-1 overflow-x-auto no-scrollbar touch-scroll py-0.5 -mx-1 px-1" aria-label="Primary">
+                {tabs.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setTab(t.id)}
+                    aria-current={tab === t.id ? 'page' : undefined}
+                    className={`whitespace-nowrap shrink-0 rounded-lg px-2.5 py-1.5 sm:px-3 text-xs sm:text-sm font-semibold transition-colors ${tab === t.id ? 'bg-white text-[#2d358b] shadow-sm' : 'text-blue-200 hover:bg-white/10 hover:text-white'}`}
+                  >
+                    {t.label}
+                    {t.id === 'overview' && openCases > 0 && (
+                      <span className="tnum ml-1.5 rounded bg-red-600 px-1.5 py-0.5 text-[10px] sm:text-xs text-white font-bold">{openCases}</span>
+                    )}
+                  </button>
+                ))}
+              </nav>
+              <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto rounded-lg bg-white/10 p-0.5 text-xs" role="group" aria-label="Network feed">
+                <button
+                  onClick={() => setFeed('live')}
+                  className={`rounded px-2 py-1 font-semibold transition-colors ${feed === 'live' ? 'bg-white text-[#2d358b] shadow-sm' : 'text-blue-200 hover:text-white'}`}
+                >
+                  Live feed
+                </button>
+                <button
+                  onClick={() => setFeed('grid-event')}
+                  className={`rounded px-2 py-1 font-semibold transition-colors ${feed === 'grid-event' ? 'bg-amber-400 text-[#2d358b] shadow-sm' : 'text-blue-200 hover:text-white'}`}
+                >
+                  Grid replay
+                </button>
+              </div>
             </div>
-          </nav>
+          </div>
         </header>
+
 
         <main id="main-content" tabIndex={-1} className="mx-auto max-w-6xl space-y-4 p-4">
           {feed === 'grid-event' && (

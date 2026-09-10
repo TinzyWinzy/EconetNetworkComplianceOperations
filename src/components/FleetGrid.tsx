@@ -56,20 +56,20 @@ export default function FleetGrid({
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="Tower fleet">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
         <h2 className="font-bold text-slate-900">Tower fleet · <span className="tnum">{filtered.length}/{towers.length}</span> sites</h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="relative">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <label className="relative flex-1 sm:flex-initial">
             <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search site or ID"
-              className="rounded-lg border border-slate-300 py-1.5 pl-7 pr-2 text-sm"
+              className="w-full sm:w-48 rounded-lg border border-slate-300 py-1.5 pl-7 pr-2 text-sm"
               aria-label="Search sites"
             />
           </label>
-          <select value={filter} onChange={(e) => setFilter(e.target.value as Filter)} className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm" aria-label="Filter by status">
+          <select value={filter} onChange={(e) => setFilter(e.target.value as Filter)} className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm bg-white" aria-label="Filter by status">
             {(['All', 'Offline', 'Backup Battery', 'KPI breach'] as Filter[]).map((f) => (
               <option key={f}>{f}</option>
             ))}
@@ -77,7 +77,7 @@ export default function FleetGrid({
         </div>
       </div>
 
-      <div className="mt-1 flex flex-wrap items-center gap-3 text-[11px] text-slate-500" aria-label="Status legend">
+      <div className="mt-2 flex flex-wrap items-center gap-2.5 text-[11px] text-slate-500" aria-label="Status legend">
         <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-600" /> Online</span>
         <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-amber-400" /> Backup battery</span>
         <span className="flex items-center gap-1"><span className="inline-block h-2.5 w-2.5 rounded-sm bg-red-600" /> Offline / KPI breach</span>
@@ -103,7 +103,7 @@ export default function FleetGrid({
                     key={t.id}
                     title={`${t.id} ${t.name} — ${t.status}, CA ${t.cellAvailabilityPercent}%`}
                     onClick={() => setExpanded(expanded === t.id ? null : t.id)}
-                    className={`h-5 w-5 rounded-sm ${dot(t)} ${assignments.has(t.id) ? 'outline outline-2 outline-offset-1 outline-blue-700' : ''}`}
+                    className={`h-5 w-5 sm:h-5 sm:w-5 rounded-sm ${dot(t)} ${assignments.has(t.id) ? 'outline outline-2 outline-offset-1 outline-blue-700' : ''}`}
                     aria-label={`${t.id} ${t.name} ${t.status}`}
                   />
                 ))}
@@ -116,7 +116,7 @@ export default function FleetGrid({
         </div>
       )}
       <p className="tnum mt-2 flex items-center gap-1 text-xs text-slate-500">
-        <RefreshCw size={12} /> Live feed refreshes automatically · outlined sites have crews assigned · select a site for detail.
+        <RefreshCw size={12} className="shrink-0" /> Live feed refreshes automatically · outlined sites have crews assigned · select a site for detail.
       </p>
     </section>
   );
@@ -124,18 +124,24 @@ export default function FleetGrid({
 
 function SiteDetail({ tower: t, assigned, onAssign, readOnly }: { tower: TowerTelemetry; assigned?: CrewAssignment; onAssign: (id: string) => void; readOnly: boolean }) {
   return (
-    <div className="tnum mt-1 rounded-lg bg-slate-50 p-2 text-xs text-slate-700">
-      <span className="font-bold text-slate-900">{t.id} {t.name}</span> · {t.status} · CA {t.cellAvailabilityPercent}% · DSASR {t.dsasrPercent}% · DSDR {t.dsdrPercent}%
-      {t.activeOutageDurationMinutes > 0 && ` · outage ${t.activeOutageDurationMinutes}m`}
-      {assigned ? (
-        <span className="ml-2 font-semibold text-blue-800">Crew {assigned.crew} · {new Date(assigned.assignedAt).toLocaleTimeString()} · ETA ~45m</span>
-      ) : readOnly ? (
-        <span className="ml-2 text-slate-400">Unassigned — NOC action pending</span>
-      ) : (
-        <button onClick={() => onAssign(t.id)} className="ml-2 min-h-[44px] rounded border border-slate-300 bg-white px-3 py-2 font-semibold hover:bg-slate-100">
-          Assign crew
-        </button>
-      )}
+    <div className="tnum mt-2 rounded-lg bg-slate-50 p-2.5 text-xs text-slate-700 border border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+          <span className="font-bold text-slate-900">{t.id} {t.name}</span> · {t.status} · CA {t.cellAvailabilityPercent}% · DSASR {t.dsasrPercent}% · DSDR {t.dsdrPercent}%
+          {t.activeOutageDurationMinutes > 0 && ` · outage ${t.activeOutageDurationMinutes}m`}
+        </div>
+        <div className="shrink-0">
+          {assigned ? (
+            <span className="font-semibold text-blue-800">Crew {assigned.crew} · {new Date(assigned.assignedAt).toLocaleTimeString()} · ETA ~45m</span>
+          ) : readOnly ? (
+            <span className="text-slate-400">Unassigned — NOC action pending</span>
+          ) : (
+            <button onClick={() => onAssign(t.id)} className="min-h-[36px] rounded-md border border-slate-300 bg-white px-3 py-1 font-semibold hover:bg-slate-100 shadow-sm">
+              Assign crew
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

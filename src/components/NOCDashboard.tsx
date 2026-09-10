@@ -23,20 +23,20 @@ export default function NOCDashboard({ towers, openCases }: { towers: TowerTelem
           : `${breaches} breach · ${warnings} early-warning · ${offline} offline · ${openCases} open ${openCases === 1 ? 'case' : 'cases'}`}
       </div>
       <div className="tnum grid grid-cols-3 divide-x divide-slate-100 text-center">
-        <div className="p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Breach sites</p>
-          <p className={`text-2xl font-bold ${breaches > 0 ? 'text-red-700' : 'text-slate-900'}`}>{breaches}</p>
-          <p className="text-[11px] text-slate-400">avg CA {towers.length ? `${avg(towers, (t) => t.cellAvailabilityPercent)}%` : '—'}</p>
+        <div className="p-2 sm:p-3">
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wide text-slate-500 truncate">Breach sites</p>
+          <p className={`text-xl sm:text-2xl font-bold ${breaches > 0 ? 'text-red-700' : 'text-slate-900'}`}>{breaches}</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 truncate">avg CA {towers.length ? `${avg(towers, (t) => t.cellAvailabilityPercent)}%` : '—'}</p>
         </div>
-        <div className="p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Early-warning</p>
-          <p className={`text-2xl font-bold ${warnings > 0 ? 'text-amber-600' : 'text-slate-900'}`}>{warnings}</p>
-          <p className="text-[11px] text-slate-400">avg DSASR {towers.length ? `${avg(towers, (t) => t.dsasrPercent)}%` : '—'}</p>
+        <div className="p-2 sm:p-3">
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wide text-slate-500 truncate">Early-warning</p>
+          <p className={`text-xl sm:text-2xl font-bold ${warnings > 0 ? 'text-amber-600' : 'text-slate-900'}`}>{warnings}</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 truncate">avg DSASR {towers.length ? `${avg(towers, (t) => t.dsasrPercent)}%` : '—'}</p>
         </div>
-        <div className="p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Offline</p>
-          <p className={`text-2xl font-bold ${offline > 0 ? 'text-red-700' : 'text-slate-900'}`}>{offline}</p>
-          <p className="text-[11px] text-slate-400">avg DSDR {towers.length ? `${avg(towers, (t) => t.dsdrPercent)}%` : '—'}</p>
+        <div className="p-2 sm:p-3">
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wide text-slate-500 truncate">Offline</p>
+          <p className={`text-xl sm:text-2xl font-bold ${offline > 0 ? 'text-red-700' : 'text-slate-900'}`}>{offline}</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 truncate">avg DSDR {towers.length ? `${avg(towers, (t) => t.dsdrPercent)}%` : '—'}</p>
         </div>
       </div>
       <div className="grid gap-4 border-t border-slate-100 p-4 lg:grid-cols-2">
